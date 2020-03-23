@@ -10,10 +10,12 @@
 (def urls
   {:token "https://accounts.spotify.com/api/token"})
 
-(defn get-access-token []
+(defn get-access-token [code]
   (let [url (:token urls)
         {:keys [status body headers] :as resp}
-        (client/post url {:form-params {:grant_type "client_credentials"}
+        (client/post url {:form-params {:grant_type "authorization_code"
+                                        :code code
+                                        :redirect_uri "https://haloof-dev.ngrok.io/spotify/callback"}
                           :headers {"Authorization" (str "Basic " auth-token)
                                     "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]

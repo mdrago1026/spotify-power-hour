@@ -10,7 +10,12 @@
                  [cheshire "5.8.1"]
                  [hikari-cp "1.8.1" ] ;; datbase conn pooling
                  [org.clojure/java.jdbc "0.7.3"]
-                 [org.postgresql/postgresql "42.1.4"]]
+                 [org.postgresql/postgresql "42.1.4"]
+                 [http-kit "2.2.0"]
+                 [ring-server "0.5.0"]
+                 [compojure "1.6.0"]
+                 [ring/ring-json "0.4.0"]
+                 [ring/ring-defaults "0.3.1"]]
   :main ^:skip-aot spotify-client.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
