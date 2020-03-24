@@ -14,19 +14,20 @@
             [taoensso.timbre :as timbre
              :refer [log trace debug info warn error fatal]]
             [cheshire.core :as json]
-            [spotify-client.spotify.api :as api-spotify])
+            [spotify-client.spotify.api :as api-spotify]
+            [spotify-client.common.session :as cmn-session])
   (:use [org.httpkit.server]))
 
 (cfg-log/load-logging-config!)
 
 (defn handle-spotify-callback [req]
-  (info "SPOTIFY CALLBACK: "req)
-  (let [code (-> req :query-string :code)
+  (info "SPOTIFY CALLBACK: " req)
+  (let [code ((:params req) "code")
         token-resp (api-spotify/get-access-token code)]
-    (info "CODE: "code)
-    (info "TOKEN RESP: "token-resp)
-    )
-  {:status 200})
+    (info "TOKEN RESP: " token-resp)
+    (when (:access_token token-resp)
+      (reset! cmn-session/spotify-session token-resp))
+    {:status 200}))
 
 (defn wrap-json-body-str [handler]
   (fn [request]
@@ -42,12 +43,10 @@
 
 (def app
   (-> app-routes
+      wrap-params
+      ;;wrap-keyword-params
       wrap-json-response
       wrap-json-body-str))
-
-(def app app-routes)
-
-
 
 (defn preserve-raw-body
   "This is needed because there is no way to get the raw body of a
@@ -64,6 +63,6 @@
   (when-let [env-level (System/getenv "SLACKBOT_LOGGING")]
     (warn "Setting log level to: " env-level)
     (timbre/set-level! (keyword env-level)))
-  (run-server preserve-raw-body {:port (Integer. port) :ip ip}))
+  (run-server app {:port (Integer. port) :ip ip}))
 
 ;;(-main "localhost" 8080)
