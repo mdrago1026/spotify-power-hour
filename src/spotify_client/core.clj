@@ -23,6 +23,7 @@
 (defn handle-spotify-callback [req]
   (info "SPOTIFY CALLBACK: " req)
   (let [code ((:params req) "code")
+        _ (info "CODE: "code)
         token-resp (api-spotify/get-access-token code)]
     (info "TOKEN RESP: " token-resp)
     (when (:access_token token-resp)
