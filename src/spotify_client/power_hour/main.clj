@@ -23,7 +23,6 @@
 (defn is-section-valid-for-ph? [total-song-ms {:keys [start duration] :as section-obj}]
   (let [start-ms (* 1000 start)
         duration-ms (* 1000 duration)
-        ;;end-ms (+ start-ms duration-ms)
         power-hour-duration (* 1000 power-hour-seconds)]
     (if (<= power-hour-duration duration-ms)                ;; if this loud section is 60 sec or greater, we know we are good
       true
@@ -58,7 +57,6 @@
                 :start-section (track-info->get-start-time {:duration-ms duration-ms
                                                             :track-id track-id})}) data)))
 
-
 (defn init-ph-state-via-playlist-id! [user-id playlist-id song-count]
   (let [song-list (api-spotify/handle-paginated-requests
                     (format (:playlists-list-songs api-spotify/urls)
@@ -71,7 +69,6 @@
         shuffled-data (vec (take song-count (shuffle ph-data)))]
     (reset! cmn-session/power-hour-state {:songs shuffled-data})))
 
-
 ;; STEP 1: Get the shuffled songs in the PH state
 (def ph-data
   (init-ph-state-via-playlist-id!
@@ -83,10 +80,11 @@
 ;; STEP 2: Start a power hour
 
 (defn do-power-hour []
-  (doseq [{:keys [track-name artist-name track-id start-section]} (:songs @cmn-session/power-hour-state)
+  (doseq [[i {:keys [track-name artist-name track-id start-section]}]
+          (map-indexed vector (:songs @cmn-session/power-hour-state))
           :let [{:keys [start]} start-section
                 start-ms (* 1000 start)]]
-    (info (format "Now Playing: %s by %s (at %s start sec)" track-name artist-name start))
+    (info (format "[%s/60] Now Playing: '%s' by '%s' (at %s start sec)" (inc i) track-name artist-name start))
     (api-spotify/play-song-from-ms
       "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
       track-id
@@ -94,5 +92,7 @@
     (Thread/sleep 60000)))
 
 (def ph-future-ref (future (do-power-hour)))
+
+(future-cancel ph-future-ref)
 
 

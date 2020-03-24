@@ -22,6 +22,32 @@
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
    :player-me "https://api.spotify.com/v1/me/player"})
 
+(defn get-refresh-token []
+  (let [url (:token urls)
+        {:keys [status body headers] :as resp}
+        (client/post url {:form-params {:grant_type "refresh_token"
+                                        :refresh_token (:refresh_token @cmn-session/spotify-session)}
+                          :headers {"Authorization" (str "Basic " auth-token)
+                                    "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+;; TODO:: this needs to be cleaned/loopified
+(defn wrap-oauth-refresh [http-fn & args]
+  (try
+    (if args
+      (apply http-fn args)
+      (http-fn))
+    (catch Exception e
+      (when-let [exception-data (ex-data e)]
+        (when (= 401 (:status exception-data))
+          (warn "TOKEN EXPIRED!")
+          (let [refresh-token-results (get-refresh-token)]
+            (swap! cmn-session/spotify-session assoc :access_token (:access_token refresh-token-results))
+            (info refresh-token-results)
+            (info "Calling again...")
+            (wrap-oauth-refresh http-fn args)))))))
+
 (defn call-oauth-url []
   (let [url (:oauth-url urls)
         {:keys [status body headers] :as resp}
@@ -118,6 +144,9 @@
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
+
+;(wrap-oauth-refresh get-active-devices)
+;(get-active-devices)
 
 (defn start-playing [device-id]
   (let [url (:player-me urls)
