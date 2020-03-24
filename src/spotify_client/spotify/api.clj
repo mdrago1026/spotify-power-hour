@@ -13,6 +13,7 @@
   {:token "https://accounts.spotify.com/api/token"
    :playlists-get "https://api.spotify.com/v1/users/%s/playlists?offset=0&limit=20"
    :playlists-list-songs "https://api.spotify.com/v1/playlists/%s/tracks"
+   :tracks-analysis "https://api.spotify.com/v1/audio-analysis/%s"
    :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"})
 
 (defn call-oauth-url []
@@ -92,16 +93,27 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
+(defn track-id->analysis [track-id]
+  (let [url (format (:tracks-analysis urls) track-id)
+        {:keys [status body headers] :as resp}
+        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                   "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
 
-(def my-user-playlists (handle-paginated-requests (format (:playlists-get urls) "mdrago1026")))
+;;(track-id->analysis "2lpcY0lROi0khLsnBCMp1W")
 
-(def halo-night-playlist-id (-> (filter-playlist-by-name "HALO nighT" my-user-playlists) first :id))
-(def halo-night-songs (plalyist-id->track-list halo-night-playlist-id))
-
-
-(def halo-night-songs
-  (handle-paginated-requests (format (:playlists-list-songs urls) halo-night-playlist-id)))
-
-;;(count halo-night-songs)
+;(def my-user-playlists (handle-paginated-requests (format (:playlists-get urls) "mdrago1026")))
+;
+;(def halo-night-playlist-id (-> (filter-playlist-by-name "HALO nighT" my-user-playlists) first :id))
+;(def halo-night-songs (plalyist-id->track-list halo-night-playlist-id))
+;
+;
+;(def halo-night-songs
+;  (handle-paginated-requests (format (:playlists-list-songs urls) halo-night-playlist-id)))
+;
+;;;(count halo-night-songs)
+;
+;(first halo-night-songs)
 
 
