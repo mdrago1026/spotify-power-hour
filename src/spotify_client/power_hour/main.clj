@@ -8,14 +8,14 @@
 (def power-hour-seconds 60)
 
 ;; for testing
-(def halo-night-songs
-  (api-spotify/handle-paginated-requests
-    (format (:playlists-list-songs api-spotify/urls)
-            (-> (api-spotify/filter-playlist-by-name
-                  "HALO nighT"
-                  (api-spotify/handle-paginated-requests
-                    (format (:playlists-get api-spotify/urls) "mdrago1026")))
-                first :id))))
+;(def halo-night-songs
+;  (api-spotify/handle-paginated-requests
+;    (format (:playlists-list-songs api-spotify/urls)
+;            (-> (api-spotify/filter-playlist-by-name
+;                  "HALO nighT"
+;                  (api-spotify/handle-paginated-requests
+;                    (format (:playlists-get api-spotify/urls) "mdrago1026")))
+;                first :id))))
 
 
 
@@ -58,61 +58,6 @@
                 :start-section (track-info->get-start-time {:duration-ms duration-ms
                                                             :track-id track-id})}) data)))
 
-;(def simple-design (api-spotify/track-id->analysis "2lpcY0lROi0khLsnBCMp1W"))
-;(def i-am-a-stone (api-spotify/track-id->analysis "4pJ1UhXr5TfRKNDsjOT0Zi"))
-;
-;
-;
-(def simple-design-track-data
-  (first (filterv #(= "Simple Design" (:track-name %)) (vec-of-track-objs->relative-ph-data halo-night-songs))))
-
-simple-design-track-data
-
-;(def i-am-a-stone-track-data
-;  (first (filterv #(= "I Am a Stone" (:track-name %)) (vec-of-track-objs->relative-ph-data halo-night-songs))))
-;
-;simple-design-track-data
-;i-am-a-stone-track-data ;; 346013ms total
-
-;(track-info->get-start-time simple-design-track-data)
-;(track-info->get-start-time i-am-a-stone-track-data)
-;
-;
-;(-> (sort-by :loudness (-> simple-design :sections)) reverse first)
-;(-> (sort-by :loudness (-> i-am-a-stone :sections)) reverse)
-;
-;(is-section-valid-for-ph? 346013 (nth
-;                                   (-> (sort-by :loudness (-> i-am-a-stone :sections)) reverse)
-;                                   0))
-
-;;(spit "/tmp/simple_design.json" (json/generate-string simple-design))
-
-;; 254786 ;; simple design length in ms
-;; 190.20936 loud start
-;; 24.44862 ;; duration
-
-;; simple design track id 2lpcY0lROi0khLsnBCMp1W
-
-
-;; roughly 18-21 sec
-(def data-with-start-time
-  (vec-of-track-objs->relative-ph-data halo-night-songs))
-
-;(time (vec-of-track-objs->relative-ph-data halo-night-songs))
-
-
-;
-;halo-night-songs
-
-;;(filterv #(nil? (% :start-section)) data-with-start-time)
-
-;;(shuffle data-with-start-time)
-
-
-;; Things to consider, this algo will always play songs starting at the same point. maybe shuffle the
-;; loudest?
-;; also, we need to cache the song analysis somewhere!!
-
 
 (defn init-ph-state-via-playlist-id! [user-id playlist-id song-count]
   (let [song-list (api-spotify/handle-paginated-requests
@@ -126,14 +71,25 @@ simple-design-track-data
         shuffled-data (vec (take song-count (shuffle ph-data)))]
     (reset! cmn-session/power-hour-state {:songs shuffled-data})))
 
-(def ph-data
-  (init-ph-state-via-playlist-id!
-    "mdrago1026"
-    "75M2u29GVTzqp5q6p51IRC"
-    60))
+;(def ph-data
+;  (init-ph-state-via-playlist-id!
+;    "mdrago1026"
+;    "75M2u29GVTzqp5q6p51IRC"
+;    60))
 
-(count ph-data)
 
-ph-data
 
-ph-data
+;(defn do-power-hour []
+;  (future (doseq [{:keys [track-name artist-name track-id start-section]} (:songs ph-data)
+;          :let [{:keys [start]} start-section
+;                start-ms (* 1000 start)]]
+;    (info (format "Now Playing: %s by %s (at %s start sec)" track-name artist-name start))
+;    (api-spotify/play-song-from-ms
+;      "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
+;      track-id
+;      start-ms)
+;    (Thread/sleep 60000))))
+
+;(first (:songs ph-data))
+;
+;ph-data

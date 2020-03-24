@@ -9,6 +9,9 @@
 (def auth-token (System/getenv "SPOTIFY_CLJ_AUTH_TOKEN"))
 (def spotify-user (System/getenv "SPOTIFY_USER"))
 
+(def spotify-uris
+  {:track "spotify:track:%s"})
+
 (def urls
   {:token "https://accounts.spotify.com/api/token"
    :playlists-get "https://api.spotify.com/v1/users/%s/playlists?offset=0&limit=20"
@@ -16,7 +19,8 @@
    :tracks-analysis "https://api.spotify.com/v1/audio-analysis/%s"
    :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"
    :player-get-devices "https://api.spotify.com/v1/me/player/devices"
-   :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"})
+   :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
+   :player-me "https://api.spotify.com/v1/me/player"})
 
 (defn call-oauth-url []
   (let [url (:oauth-url urls)
@@ -115,9 +119,20 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
-(defn play-song-from-ms [device-id track-uri position-ms]
+(defn start-playing [device-id]
+  (let [url (:player-me urls)
+        body (json/generate-string {:device_ids [device-id]
+                                    :play true})
+        {:keys [status body headers] :as resp}
+        (client/put url {:body body
+                         :headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                   "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+(defn play-song-from-ms [device-id track-id position-ms]
   (let [url (format (:player-start-song urls) device-id)
-        body (json/generate-string {:uris [track-uri]
+        body (json/generate-string {:uris [(format (:track spotify-uris) track-id)]
                                     :position_ms position-ms})
         {:keys [status body headers] :as resp}
         (client/put url {:body body
@@ -126,13 +141,15 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
-(play-song-from-ms
-  "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
-  "spotify:track:2lpcY0lROi0khLsnBCMp1W"
-  (* 1000 190.20936)
-  )
+;;(start-playing "2129f633235a6ec17e1317d165a73eb6eb21d9b1")
 
-(get-active-devices)
+;(play-song-from-ms
+;  "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
+;  "2lpcY0lROi0khLsnBCMp1W"
+;  (* 1000 190.20936)
+;  )
+
+;;(get-active-devices)
 
 ;;(track-id->analysis "2lpcY0lROi0khLsnBCMp1W")
 
