@@ -71,25 +71,28 @@
         shuffled-data (vec (take song-count (shuffle ph-data)))]
     (reset! cmn-session/power-hour-state {:songs shuffled-data})))
 
-;(def ph-data
-;  (init-ph-state-via-playlist-id!
-;    "mdrago1026"
-;    "75M2u29GVTzqp5q6p51IRC"
-;    60))
+
+;; STEP 1: Get the shuffled songs in the PH state
+(def ph-data
+  (init-ph-state-via-playlist-id!
+    "mdrago1026"
+    "75M2u29GVTzqp5q6p51IRC"
+    60))
 
 
+;; STEP 2: Start a power hour
 
-;(defn do-power-hour []
-;  (future (doseq [{:keys [track-name artist-name track-id start-section]} (:songs ph-data)
-;          :let [{:keys [start]} start-section
-;                start-ms (* 1000 start)]]
-;    (info (format "Now Playing: %s by %s (at %s start sec)" track-name artist-name start))
-;    (api-spotify/play-song-from-ms
-;      "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
-;      track-id
-;      start-ms)
-;    (Thread/sleep 60000))))
+(defn do-power-hour []
+  (doseq [{:keys [track-name artist-name track-id start-section]} (:songs @cmn-session/power-hour-state)
+          :let [{:keys [start]} start-section
+                start-ms (* 1000 start)]]
+    (info (format "Now Playing: %s by %s (at %s start sec)" track-name artist-name start))
+    (api-spotify/play-song-from-ms
+      "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
+      track-id
+      start-ms)
+    (Thread/sleep 60000)))
 
-;(first (:songs ph-data))
-;
-;ph-data
+(def ph-future-ref (future (do-power-hour)))
+
+
