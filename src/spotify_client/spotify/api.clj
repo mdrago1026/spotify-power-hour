@@ -11,7 +11,7 @@
 
 (def urls
   {:token "https://accounts.spotify.com/api/token"
-   :playlist-get "https://api.spotify.com/v1/users/%s/playlists"})
+   :playlist-get "https://api.spotify.com/v1/users/%s/playlists?offset=0&limit=50"})
 
 (defn get-access-token [code]
   (let [url (:token urls)
@@ -34,4 +34,8 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
+;(mapv :name (:items (get-user-playlists "mdrago1026")))
+;;
 ;;(get-user-playlists "mdrago1026")
+
+;; left off: why are some of my playlists missing?
