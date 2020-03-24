@@ -14,7 +14,9 @@
    :playlists-get "https://api.spotify.com/v1/users/%s/playlists?offset=0&limit=20"
    :playlists-list-songs "https://api.spotify.com/v1/playlists/%s/tracks"
    :tracks-analysis "https://api.spotify.com/v1/audio-analysis/%s"
-   :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"})
+   :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"
+   :player-get-devices "https://api.spotify.com/v1/me/player/devices"
+   :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"})
 
 (defn call-oauth-url []
   (let [url (:oauth-url urls)
@@ -81,6 +83,10 @@
   (let [filtered (filterv (fn [{:keys [name]}] (= (s/lower-case name) (s/lower-case search-term))) playlists-vec)]
     filtered))
 
+(defn filter-playlist-by-id [input-playlist-id playlists-vec]
+  (let [filtered (filterv (fn [{:keys [id]}] (= id input-playlist-id)) playlists-vec)]
+    filtered))
+
 ;;; https://open.spotify.com/playlist/75M2u29GVTzqp5q6p51IRC?si=NQRCUMapQ-S37eMg_PhOYQ
 ;
 ;;; https://api.spotify.com/v1/users/mdrago1026/playlists/75M2u29GVTzqp5q6p51IRC?si=NQRCUMapQ-S37eMg_PhOYQ/tracks
@@ -101,6 +107,33 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
+(defn get-active-devices []
+  (let [url (:player-get-devices urls)
+        {:keys [status body headers] :as resp}
+        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                   "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+(defn play-song-from-ms [device-id track-uri position-ms]
+  (let [url (format (:player-start-song urls) device-id)
+        body (json/generate-string {:uris [track-uri]
+                                    :position_ms position-ms})
+        {:keys [status body headers] :as resp}
+        (client/put url {:body body
+                         :headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                   "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+(play-song-from-ms
+  "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
+  "spotify:track:2lpcY0lROi0khLsnBCMp1W"
+  (* 1000 190.20936)
+  )
+
+(get-active-devices)
+
 ;;(track-id->analysis "2lpcY0lROi0khLsnBCMp1W")
 
 ;(def my-user-playlists (handle-paginated-requests (format (:playlists-get urls) "mdrago1026")))
@@ -117,3 +150,4 @@
 ;(first halo-night-songs)
 
 
+;; DRAGON PRO DEVICE ID: 2129f633235a6ec17e1317d165a73eb6eb21d9b1
