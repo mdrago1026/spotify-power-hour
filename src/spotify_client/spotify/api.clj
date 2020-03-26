@@ -18,6 +18,7 @@
    :playlists-get "https://api.spotify.com/v1/users/%s/playlists?offset=0&limit=20"
    :playlists-list-songs "https://api.spotify.com/v1/playlists/%s/tracks"
    :tracks-analysis "https://api.spotify.com/v1/audio-analysis/%s"
+   :tracks-get "https://api.spotify.com/v1/tracks/%s"
    :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"
    :player-get-devices "https://api.spotify.com/v1/me/player/devices"
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
@@ -40,7 +41,7 @@
   (try
     (if args
       (let [arg-map (nth args 1)
-            final-arg-map arg-map ;;(assoc arg-map :throw-exceptions false)
+            final-arg-map arg-map                           ;;(assoc arg-map :throw-exceptions false)
             final-args [(first args) final-arg-map]]
         (apply http-fn final-args))
       (http-fn))
@@ -59,21 +60,21 @@
             (let [parsed-body (json/parse-string (:body exception-data) true)
                   {:keys [status message] :as error-context} (:error parsed-body)]
 
-              (info "ERROR BODY: "error-context)
+              (info "ERROR BODY: " error-context)
               (throw (ex-info "Spotify Exception" error-context)))))
         (throw e)))))
 
 (defn call-oauth-url []
   (let [url (:oauth-url urls)
         {:keys [status body headers] :as resp}
-        (client/get url {:redirect-strategy :default
+        (wrap-oauth-refresh client/get url {:redirect-strategy :default
                          :headers {"Content-type" "application/json; charset=utf-8"}})]
     resp))
 
 (defn get-access-token [code]
   (let [url (:token urls)
         {:keys [status body headers] :as resp}
-        (client/post url {:form-params {:grant_type "authorization_code"
+        (wrap-oauth-refresh client/post url {:form-params {:grant_type "authorization_code"
                                         :code code
                                         :redirect_uri "https://haloof-dev.ngrok.io/spotify/callback"}
                           :headers {"Authorization" (str "Basic " auth-token)
@@ -86,7 +87,7 @@
 (defn get-user-playlists* [user & {:keys [url]}]
   (let [url (or url (format (:playlists-get urls) (or user spotify-user)))
         {:keys [status body headers] :as resp}
-        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
@@ -110,7 +111,7 @@
         (loop [url nil
                overall-data []]
           (let [{:keys [status body headers] :as resp}
-                (client/get (or url initial-url)
+                (wrap-oauth-refresh client/get (or url initial-url)
                             {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                        "Content-type" "application/json; charset=utf-8"}})
                 {:keys [next] :as parsed-body} (json/parse-string body true)]
@@ -139,7 +140,7 @@
 (defn plalyist-id->track-list [playlist-id]
   (let [url (format (:playlists-list-songs urls) playlist-id)
         {:keys [status body headers] :as resp}
-        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
@@ -147,7 +148,7 @@
 (defn track-id->analysis [track-id]
   (let [url (format (:tracks-analysis urls) track-id)
         {:keys [status body headers] :as resp}
-        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
@@ -155,7 +156,7 @@
 (defn get-active-devices []
   (let [url (:player-get-devices urls)
         {:keys [status body headers] :as resp}
-        (client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
@@ -163,23 +164,22 @@
 ;(wrap-oauth-refresh get-active-devices)
 ;(get-active-devices)
 
-(defn start-playing [device-id]
+(defn get-current-player-info []
   (let [url (:player-me urls)
-        body (json/generate-string {:device_ids [device-id]
-                                    :play true})
         {:keys [status body headers] :as resp}
-        (client/put url {:body body
-                         :headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
+
+;;(get-current-player-info)
 
 (defn play-song-from-ms [device-id track-id position-ms]
   (let [url (format (:player-start-song urls) device-id)
         body (json/generate-string {:uris [(format (:track spotify-uris) track-id)]
                                     :position_ms position-ms})
         {:keys [status body headers] :as resp}
-        (client/put url {:body body
+        (wrap-oauth-refresh client/put url {:body body
                          :headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
@@ -188,7 +188,7 @@
 (defn queue-song [track-id]
   (let [url (format (:player-queue urls) (format (:track spotify-uris) track-id))
         {:keys [status body headers] :as resp}
-        (client/post url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+        (wrap-oauth-refresh client/post url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
                                     "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
@@ -203,6 +203,15 @@
     parsed-body))
 
 ;;(search "fAr Away")
+
+(defn get-track [track-id]
+  (let [url (format (:tracks-get urls) track-id)
+        {:keys [status body headers] :as resp}
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                                       "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
 ;
 ;(mapv
 ;  (fn [{:keys [id name artists]}]

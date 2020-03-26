@@ -20,10 +20,16 @@
         {:valid? true :data xformed-data :status 200}))))
 
 (defn spotify-player-queue [track-id]
-  (info "TRACK ID: "track-id)
+  (api-spotify/get-track track-id)
   (let [char-count (count track-id)]
     (if (< char-count cfg-gen/spotify-uri-track-length)
       {:valid? false :msg (format "track_id must be exactly %s characters" cfg-gen/spotify-uri-track-length)
        :status 400}
       (let [resp (api-spotify/queue-song track-id)]
         {:valid? true :data resp :status 200}))))
+
+;;(api-spotify/queue-song "zzE4VBO845k24R8ZzuMpvg")
+
+(defn spotify-player-current []
+  (let [data (api-spotify/get-current-player-info)]
+    {:valid? true :data data :status 200}))

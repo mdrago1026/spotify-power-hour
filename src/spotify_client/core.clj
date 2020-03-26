@@ -25,7 +25,7 @@
 (defn handle-spotify-callback [req]
   (info "SPOTIFY CALLBACK: " req)
   (let [code ((:params req) "code")
-        _ (info "CODE: "code)
+        _ (info "CODE: " code)
         token-resp (api-spotify/get-access-token code)]
     (info "TOKEN RESP: " token-resp)
     (when (:access_token token-resp)
@@ -67,18 +67,25 @@
     (catch Exception e
       (if-let [{:keys [status message] :as error-data} (ex-data e)]
         (do
-          (warn "ERROR: "error-data)
+          (warn "ERROR: " error-data)
           {:status status
            :body {:msg message}})
         {:status 500}))))
 
+(defn handle-spotify-player-current [req]
+  (let [{:keys [valid? status data msg]} (service-spotify/spotify-player-current)]
+    {:status status
+     :headers {"Content-Type" "application/json"}
+     :body {:data data}}))
+
 (defroutes
   app-routes
-    (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
-    (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
-    (POST "/spotify/player/queue" req (catch-spotify-exceptions handle-spotify-player-queue req))
-    (route/resources "/")
-    (route/not-found "Not Found"))
+  (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
+  (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
+  (GET "/spotify/player/current" req (catch-spotify-exceptions handle-spotify-player-current req))
+  (POST "/spotify/player/queue" req (catch-spotify-exceptions handle-spotify-player-queue req))
+  (route/resources "/")
+  (route/not-found "Not Found"))
 
 
 (def app
