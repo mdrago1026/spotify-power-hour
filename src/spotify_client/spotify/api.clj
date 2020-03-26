@@ -20,7 +20,8 @@
    :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"
    :player-get-devices "https://api.spotify.com/v1/me/player/devices"
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
-   :player-me "https://api.spotify.com/v1/me/player"})
+   :player-me "https://api.spotify.com/v1/me/player"
+   :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"})
 
 (defn get-refresh-token []
   (let [url (:token urls)
@@ -169,6 +170,16 @@
                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
+
+(defn queue-song [track-id]
+  (let [url (format (:player-queue urls) (format (:track spotify-uris) track-id))
+        {:keys [status body headers] :as resp}
+        (client/post url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                   "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+;;(queue-song "2lpcY0lROi0khLsnBCMp1W")
 
 ;;(start-playing "2129f633235a6ec17e1317d165a73eb6eb21d9b1")
 
