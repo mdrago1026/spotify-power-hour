@@ -4,7 +4,8 @@
             [taoensso.timbre :as timbre
              :refer [log trace debug info warn error fatal]]
             [cheshire.core :as json]
-            [spotify-client.common.session :as cmn-session]))
+            [spotify-client.common.session :as cmn-session]
+            [ring.util.codec :as ring-codec]))
 
 (def auth-token (System/getenv "SPOTIFY_CLJ_AUTH_TOKEN"))
 (def spotify-user (System/getenv "SPOTIFY_USER"))
@@ -21,7 +22,8 @@
    :player-get-devices "https://api.spotify.com/v1/me/player/devices"
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
    :player-me "https://api.spotify.com/v1/me/player"
-   :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"})
+   :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"
+   :search "https://api.spotify.com/v1/search?type=track&limit=5&q=%s"})
 
 (defn get-refresh-token []
   (let [url (:token urls)
@@ -37,17 +39,29 @@
 (defn wrap-oauth-refresh [http-fn & args]
   (try
     (if args
-      (apply http-fn args)
+      (let [arg-map (nth args 1)
+            final-arg-map arg-map ;;(assoc arg-map :throw-exceptions false)
+            final-args [(first args) final-arg-map]]
+        (apply http-fn final-args))
       (http-fn))
     (catch Exception e
-      (when-let [exception-data (ex-data e)]
-        (when (= 401 (:status exception-data))
-          (warn "TOKEN EXPIRED!")
-          (let [refresh-token-results (get-refresh-token)]
-            (swap! cmn-session/spotify-session assoc :access_token (:access_token refresh-token-results))
-            (info refresh-token-results)
-            (info "Calling again...")
-            (wrap-oauth-refresh http-fn args)))))))
+      (if-let [exception-data (ex-data e)]
+        (if (= 401 (:status exception-data))
+          (do
+            (warn "TOKEN EXPIRED!")
+            (let [refresh-token-results (get-refresh-token)]
+              (swap! cmn-session/spotify-session assoc :access_token (:access_token refresh-token-results))
+              (info refresh-token-results)
+              (info "Calling again...")
+              (wrap-oauth-refresh http-fn args)))
+          (do
+            (warn "Caught generic exception, rethrowing...")
+            (let [parsed-body (json/parse-string (:body exception-data) true)
+                  {:keys [status message] :as error-context} (:error parsed-body)]
+
+              (info "ERROR BODY: "error-context)
+              (throw (ex-info "Spotify Exception" error-context)))))
+        (throw e)))))
 
 (defn call-oauth-url []
   (let [url (:oauth-url urls)
@@ -175,9 +189,31 @@
   (let [url (format (:player-queue urls) (format (:track spotify-uris) track-id))
         {:keys [status body headers] :as resp}
         (client/post url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
-                                   "Content-type" "application/json; charset=utf-8"}})
+                                    "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
+
+(defn search [search-term]
+  (let [url (format (:search urls) (ring-codec/url-encode search-term))
+        {:keys [status body headers] :as resp}
+        (wrap-oauth-refresh client/get
+                            url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                           "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+;;(search "fAr Away")
+;
+;(mapv
+;  (fn [{:keys [id name artists]}]
+;    {:id id
+;     :track-name name
+;     :artists (-> artists first :name)}
+;    ) (-> (search "fAr AWAY") :tracks :items))
+;
+;(-> (search "fAr AWAY") :tracks :items)
+;
+;(search "fAr AWAY")
 
 ;;(queue-song "2lpcY0lROi0khLsnBCMp1W")
 

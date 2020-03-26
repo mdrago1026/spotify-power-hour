@@ -15,7 +15,9 @@
              :refer [log trace debug info warn error fatal]]
             [cheshire.core :as json]
             [spotify-client.spotify.api :as api-spotify]
-            [spotify-client.common.session :as cmn-session])
+            [spotify-client.common.session :as cmn-session]
+            [spotify-client.config.general :as cfg-gen]
+            [spotify-client.service.spotify :as service-spotify])
   (:use [org.httpkit.server]))
 
 (cfg-log/load-logging-config!)
@@ -36,11 +38,37 @@
                                          (json/parse-string (:body request) true)
                                          (catch Exception e))))))
 
+(defn handle-spotify-search [req]
+  (let [query-string (get-in req [:params "q"])
+        char-count (count query-string)]
+    (info query-string)
+    (if (< char-count cfg-gen/spotify-search-min-char)
+      {:status 401
+       :headers {"Content-Type" "application/json"}
+       :body {:msg (format "Query string must be at least %s characters" cfg-gen/spotify-search-min-char)}}
+      (let [results (service-spotify/spotify-search query-string)]
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body {:data results}}))))
+
+(defn catch-spotify-exceptions [handler-fn req]
+  (try
+    (handler-fn req)
+    (catch Exception e
+      (if-let [{:keys [status message] :as error-data} (ex-data e)]
+        (do
+          (warn "ERROR: "error-data)
+          {:status status
+           :body {:msg message}})
+        {:status 500}))))
+
 (defroutes
   app-routes
-  (GET "/spotify/callback" req (handle-spotify-callback req))
-  (route/resources "/")
-  (route/not-found "Not Found"))
+    (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
+    (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
+    (route/resources "/")
+    (route/not-found "Not Found"))
+
 
 (def app
   (-> app-routes
@@ -66,4 +94,4 @@
     (timbre/set-level! (keyword env-level)))
   (run-server app {:port (Integer. port) :ip ip}))
 
-;;(-main "localhost" 8080)
+;(-main "localhost" 8080)

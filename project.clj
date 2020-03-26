@@ -15,7 +15,8 @@
                  [ring-server "0.5.0"]
                  [compojure "1.6.0"]
                  [ring/ring-json "0.4.0"]
-                 [ring/ring-defaults "0.3.1"]]
+                 [ring/ring-defaults "0.3.1"]
+                 [ring/ring-codec "1.1.2"]]
   :main ^:skip-aot spotify-client.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

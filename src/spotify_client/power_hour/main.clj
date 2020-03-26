@@ -70,11 +70,11 @@
     (reset! cmn-session/power-hour-state {:songs shuffled-data})))
 
 ;; STEP 1: Get the shuffled songs in the PH state
-(def ph-data
-  (init-ph-state-via-playlist-id!
-    "mdrago1026"
-    "75M2u29GVTzqp5q6p51IRC"
-    60))
+;(def ph-data
+;  (init-ph-state-via-playlist-id!
+;    "mdrago1026"
+;    "75M2u29GVTzqp5q6p51IRC"
+;    60))
 
 
 ;; STEP 2: Start a power hour
@@ -91,8 +91,8 @@
       start-ms)
     (Thread/sleep 60000)))
 
-(def ph-future-ref (future (do-power-hour)))
-
-(future-cancel ph-future-ref)
+;(def ph-future-ref (future (do-power-hour)))
+;
+;(future-cancel ph-future-ref)
 
 
