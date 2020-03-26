@@ -24,7 +24,7 @@
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
    :player-me "https://api.spotify.com/v1/me/player"
    :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"
-   :search "https://api.spotify.com/v1/search?type=track&limit=5&q=%s"})
+   :search "https://api.spotify.com/v1/search?type=track&limit=10&q=%s"})
 
 (defn get-refresh-token []
   (let [url (:token urls)
