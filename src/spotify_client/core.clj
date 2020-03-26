@@ -30,7 +30,8 @@
     (info "TOKEN RESP: " token-resp)
     (when (:access_token token-resp)
       (reset! cmn-session/spotify-session token-resp))
-    {:status 200}))
+    {:status 200
+     :body "Successfully authenticated"}))
 
 (defn wrap-json-body-str [handler]
   (fn [request]
@@ -40,16 +41,25 @@
 
 (defn handle-spotify-search [req]
   (let [query-string (get-in req [:params "q"])
-        char-count (count query-string)]
-    (info query-string)
-    (if (< char-count cfg-gen/spotify-search-min-char)
-      {:status 401
+        {:keys [valid? status data msg]} (service-spotify/spotify-search query-string)]
+    (if valid?
+      {:status status
        :headers {"Content-Type" "application/json"}
-       :body {:msg (format "Query string must be at least %s characters" cfg-gen/spotify-search-min-char)}}
-      (let [results (service-spotify/spotify-search query-string)]
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body {:data results}}))))
+       :body {:data data}}
+      {:status status
+       :headers {"Content-Type" "application/json"}
+       :body {:msg msg}})))
+
+(defn handle-spotify-player-queue [req]
+  (let [query-string (get-in req [:params "track_id"])
+        {:keys [valid? status data msg]} (service-spotify/spotify-player-queue query-string)]
+    (if valid?
+      {:status status
+       :headers {"Content-Type" "application/json"}
+       :body {:data data}}
+      {:status status
+       :headers {"Content-Type" "application/json"}
+       :body {:msg msg}})))
 
 (defn catch-spotify-exceptions [handler-fn req]
   (try
@@ -66,6 +76,7 @@
   app-routes
     (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
     (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
+    (POST "/spotify/player/queue" req (catch-spotify-exceptions handle-spotify-player-queue req))
     (route/resources "/")
     (route/not-found "Not Found"))
 
