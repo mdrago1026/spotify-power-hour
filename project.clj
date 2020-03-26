@@ -18,6 +18,7 @@
                  [ring/ring-defaults "0.3.1"]
                  [ring/ring-codec "1.1.2"]]
   :main ^:skip-aot spotify-client.core
+  :plugins [[lein-ring "0.12.1"]]
   :ring {:handler spotify-client.core/app}
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
