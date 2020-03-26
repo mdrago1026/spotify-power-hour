@@ -63,6 +63,7 @@
 
 (defn catch-spotify-exceptions [handler-fn req]
   (try
+    (info "Incoming request: "req)
     (handler-fn req)
     (catch Exception e
       (if-let [{:keys [status message] :as error-data} (ex-data e)]
@@ -87,7 +88,6 @@
   (route/resources "/")
   (route/not-found "Not Found"))
 
-
 (def app
   (-> app-routes
       wrap-params
@@ -110,6 +110,7 @@
   (when-let [env-level (System/getenv "SLACKBOT_LOGGING")]
     (warn "Setting log level to: " env-level)
     (timbre/set-level! (keyword env-level)))
+  (info "Starting Spotify Client!")
   (run-server app {:port (Integer. port) :ip ip}))
 
 ;(-main "localhost" 8080)
