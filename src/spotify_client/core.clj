@@ -91,11 +91,10 @@
 (defn handle-verify-ui [req]
   (let [state (get-in req [:params "state"])
         token (get @cmn-session/session-id-cache state)
-        base {:status 200
-              :headers {"Content-Type" "application/json"}}]
+        base {:headers {"Content-Type" "application/json"}}]
     (if token
-      (assoc base :body {:data {:valid true :token token}})
-      (assoc base :body {:data {:valid false :token token}}))))
+      (assoc base :body {:data {:valid true :token token}} :status 200)
+      (assoc base :body {:data {:valid false :token token}} :status 404))))
 
 (defroutes
   app-routes

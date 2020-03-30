@@ -4,7 +4,9 @@
              :refer [log trace debug info warn error fatal]]
             [cheshire.core :as json]
             [spotify-client.common.session :as cmn-session]
-            [spotify-client.config.general :as cfg-gen]))
+            [spotify-client.config.general :as cfg-gen]
+            [again.core :as again]
+            [spotify-client.common.retry :as cmn-retry]))
 
 (defn spotify-search [search-term]
   (let [char-count (count search-term)]
@@ -33,3 +35,7 @@
 (defn spotify-player-current []
   (let [data (api-spotify/get-current-player-info)]
     {:valid? true :data data :status 200}))
+
+(defn attempt-to-validate-oauth [session-id]
+  (again/with-retries cmn-retry/exponential-backoff-strategy
+                      (api-spotify/verify-authentication nil session-id)))
