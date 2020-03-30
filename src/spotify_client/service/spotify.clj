@@ -37,5 +37,8 @@
     {:valid? true :data data :status 200}))
 
 (defn attempt-to-validate-oauth [session-id]
-  (again/with-retries cmn-retry/exponential-backoff-strategy
-                      (api-spotify/verify-authentication nil session-id)))
+  (again/with-retries
+    cmn-retry/exponential-backoff-strategy
+    (api-spotify/verify-authentication nil session-id)))
+
+;;(attempt-to-validate-oauth "3fe481ee-bdcc-46e2-b7d6-852711b43b06")

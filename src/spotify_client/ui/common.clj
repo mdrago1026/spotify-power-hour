@@ -6,4 +6,5 @@
 
 (def ui-states
   {:login {:sending-request-to-auth-server :sending-request-to-auth-server
-           :polling-auth-server-for-token :polling-auth-server-for-token}})
+           :successfully-authed :successfully-authed
+           :failed-to-auth :failed-to-auth}})

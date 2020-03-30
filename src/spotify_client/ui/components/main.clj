@@ -52,9 +52,25 @@
             (config! (select ui [:#login-spinner]) :visible? true)
             (config! (select ui [:.login-form]) :enabled? false))
 
+          (= (get-in cmn-ui/ui-states [:login :successfully-authed]) (new-state :status))
+          (invoke-later
+            (info "UI STATE: SUCCESSFULLY AUTHED")
+            (config! (select ui [:#login-button]) :enabled? true)
+            (config! (select ui [:#login-spinner]) :visible? false)
+            (config! (select ui [:.login-form]) :enabled? true)
+            (config! (select ui [:#login-success-text]) :visible? true))
+
 
           :else
-          (error (format "Unknown UI state: %s" (new-state :status))))))))
+          (do
+          ;;  (error (format "Unknown UI state: %s" (new-state :status)))
+            (invoke-later
+              (info "UI STATE: NIL")
+              (config! (select ui [:#login-button]) :enabled? true)
+              (config! (select ui [:#login-spinner]) :visible? false)
+              (config! (select ui [:.login-form]) :enabled? true)
+              (config! (select ui [:#login-success-text]) :visible? false)
+              )))))))
 
 (defn
   ui
@@ -68,6 +84,7 @@
            :ui-ref mf
           ;; :roots-to-update roots-to-update
            :panels {}
+           :status nil
            :scene cmn-ui/ui-scene-login)
 
     ;; TODO: need to loop through and add listeners after all panels are made
@@ -85,5 +102,6 @@
       mf)))
 
 ;;(ui)
+
 
 ;; ff1826b82af24af9b95d0a951a676ab5

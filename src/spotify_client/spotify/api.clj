@@ -24,7 +24,9 @@
    :player-me "https://api.spotify.com/v1/me/player"
    :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"
    :search "https://api.spotify.com/v1/search?type=track&limit=10&q=%s"
-   :oauth-url "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=https%%3A%%2F%%2Fdragonian-studios.com%%2Fspotify-client%%2Fcallback&scope=user-read-private%%20user-read-email%%20playlist-read-collaborative%%20user-modify-playback-state%%20user-read-playback-state"})
+   :oauth-url "https://accounts.spotify.com/authorize?client_id=%s&state=%s&response_type=code&redirect_uri=https%%3A%%2F%%2Fhaloof-dev.ngrok.io%%2Fspotify%%2Fcallback&scope=user-read-private%%20user-read-email%%20playlist-read-collaborative%%20user-modify-playback-state%%20user-read-playback-state&state=3fe481ee-bdcc-46e2-b7d6-852711b43b06"
+   ;;:oauth-url "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=https%%3A%%2F%%2Fdragonian-studios.com%%2Fspotify-client%%2Fcallback&scope=user-read-private%%20user-read-email%%20playlist-read-collaborative%%20user-modify-playback-state%%20user-read-playback-state"
+   })
 
 (defn get-refresh-token []
   (let [url (:token urls)
@@ -260,14 +262,14 @@
 
 ;;; UI SPECIFIC STUFF
 
-(defn client-id->oauth-url [client-id]
-  (format (:oauth-url urls) client-id))
+(defn client-id->oauth-url [client-id session-id]
+  (format (:oauth-url urls) client-id session-id))
 
 (defn verify-authentication
   "Returns a map of {:valid bool :token {}} if valid"
   [verify-url session-id]
   (info "ATTEMPTING TO VALIDATE SESSION ID!!")
-  (let [url (format "https://dragonian-studios.com/spotify-client/callback/verify-ui?state=%s"
+  (let [url (format "https://haloof-dev.ngrok.io/spotify/callback/verify-ui?state=%s"
                     session-id) ;; temp hard-code
         {:keys [status body headers] :as resp}
         (client/get url {:headers {"Content-type" "application/json; charset=utf-8"}})
