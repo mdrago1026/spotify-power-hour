@@ -22,14 +22,23 @@
 
 (cfg-log/load-logging-config!)
 
+
+;; General STATE flow
+;; User submits client_id from UI --> auth server
+;; Auth server calls handle-spotify-callback
+;; if successful auth, update in-mem state that tracks {state -> 1}
+;; expose an endpoint that queries this state map
+
 (defn handle-spotify-callback [req]
   (info "SPOTIFY CALLBACK: " req)
-  (let [code ((:params req) "code")
-        _ (info "CODE: " code)
-        token-resp (api-spotify/get-access-token code)]
+  (let [code (get-in req [:params "code"])
+        state (get-in req [:params "state"])
+        token-resp (api-spotify/get-access-token code state)]
     (info "TOKEN RESP: " token-resp)
     (when (:access_token token-resp)
-      (reset! cmn-session/spotify-session token-resp))
+      (reset! cmn-session/spotify-session token-resp)
+      (when state
+        (swap! cmn-session/session-id-cache assoc state 1)))
     {:status 200
      :body "Successfully authenticated"}))
 
@@ -63,7 +72,7 @@
 
 (defn catch-spotify-exceptions [handler-fn req]
   (try
-    (info "Incoming request: "req)
+    (info "Incoming request: " req)
     (handler-fn req)
     (catch Exception e
       (if-let [{:keys [status message] :as error-data} (ex-data e)]
@@ -79,9 +88,20 @@
      :headers {"Content-Type" "application/json"}
      :body {:data data}}))
 
+(defn handle-verify-ui [req]
+  (let [state (get-in req [:params "state"])
+        is-valid? (get @cmn-session/session-id-cache state)
+        base {:status 200
+              :headers {"Content-Type" "application/json"}}]
+    (if is-valid?
+      (assoc base :body {:data {:valid true}})
+      (assoc base :body {:data {:valid false}}))))
+
+
 (defroutes
   app-routes
   (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
+  (GET "/spotify/callback/verify-ui" req (handle-verify-ui req))
   (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
   (GET "/spotify/player/current" req (catch-spotify-exceptions handle-spotify-player-current req))
   (POST "/spotify/player/queue" req (catch-spotify-exceptions handle-spotify-player-queue req))

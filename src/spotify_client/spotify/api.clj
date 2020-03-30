@@ -19,12 +19,12 @@
    :playlists-list-songs "https://api.spotify.com/v1/playlists/%s/tracks"
    :tracks-analysis "https://api.spotify.com/v1/audio-analysis/%s"
    :tracks-get "https://api.spotify.com/v1/tracks/%s"
-   :oauth-url "https://accounts.spotify.com/authorize?client_id=ff1826b82af24af9b95d0a951a676ab5&response_type=code&redirect_uri=https%3A%2F%2Fhaloof-dev.ngrok.io%2Fspotify%2Fcallback&scope=user-read-private%20user-read-email%20playlist-read-collaborative"
    :player-get-devices "https://api.spotify.com/v1/me/player/devices"
    :player-start-song "https://api.spotify.com/v1/me/player/play?device_id=%s"
    :player-me "https://api.spotify.com/v1/me/player"
    :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"
-   :search "https://api.spotify.com/v1/search?type=track&limit=10&q=%s"})
+   :search "https://api.spotify.com/v1/search?type=track&limit=10&q=%s"
+   :oauth-url "https://accounts.spotify.com/authorize?client_id=%s&response_type=code&redirect_uri=https%%3A%%2F%%2Fdragonian-studios.com%%2Fspotify-client%%2Fcallback&scope=user-read-private%%20user-read-email%%20playlist-read-collaborative%%20user-modify-playback-state%%20user-read-playback-state"})
 
 (defn get-refresh-token []
   (let [url (:token urls)
@@ -71,7 +71,7 @@
                                             :headers {"Content-type" "application/json; charset=utf-8"}})]
     resp))
 
-(defn get-access-token [code]
+(defn get-access-token [code & [state]]
   (let [url (:token urls)
         {:keys [status body headers] :as resp}
         (wrap-oauth-refresh client/post url {:form-params {:grant_type "authorization_code"
@@ -253,3 +253,12 @@
 
 
 ;; DRAGON PRO DEVICE ID: 2129f633235a6ec17e1317d165a73eb6eb21d9b1
+
+
+
+
+
+;;; UI SPECIFIC STUFF
+
+(defn client-id->oauth-url [client-id]
+  (format (:oauth-url urls) client-id))

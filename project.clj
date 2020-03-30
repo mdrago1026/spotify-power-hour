@@ -16,7 +16,8 @@
                  [compojure "1.6.0"]
                  [ring/ring-json "0.4.0"]
                  [ring/ring-defaults "0.3.1"]
-                 [ring/ring-codec "1.1.2"]]
+                 [ring/ring-codec "1.1.2"]
+                 [seesaw "1.5.0"]]
   :main ^:skip-aot spotify-client.core
   :plugins [[lein-ring "0.12.5"]]
   :ring {:handler spotify-client.core/app}
