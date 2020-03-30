@@ -38,7 +38,7 @@
     (when (:access_token token-resp)
       (reset! cmn-session/spotify-session token-resp)
       (when state
-        (swap! cmn-session/session-id-cache assoc state 1)))
+        (swap! cmn-session/session-id-cache assoc state token-resp)))
     {:status 200
      :body "Successfully authenticated"}))
 

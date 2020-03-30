@@ -262,3 +262,13 @@
 
 (defn client-id->oauth-url [client-id]
   (format (:oauth-url urls) client-id))
+
+(defn verify-authentication [verify-url session-id]
+  (let [url (format "https://dragonian-studios.com/spotify-client/callback/verify-ui?state=%s"
+                    session-id) ;; temp hard-code
+        {:keys [status body headers] :as resp}
+        (client/get url {:headers {"Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
+;;(verify-authentication nil "bb9b5446-ca72-429c-9a4e-f5c0fea703c3")
