@@ -38,15 +38,12 @@
           (do
             (info "Successfully authenticated!")
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-                   :authenticated? true
-                   ))
+                   :authenticated? true)
+            (reset! cmn-session/spotify-session (:token response)))
           (do
             (info "Failed to retrieve user details with error: " response)
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :failed-to-auth])
-                   :authenticated? false)))
-
-        )
-      )))
+                   :authenticated? false)))))))
 
 (defn
   handle-keys

@@ -25,6 +25,7 @@
    :player-me "https://api.spotify.com/v1/me/player"
    :player-queue "https://api.spotify.com/v1/me/player/queue?uri=%s"
    :search "https://api.spotify.com/v1/search?type=track&limit=10&q=%s"
+   :users-me "https://api.spotify.com/v1/me"
    ;; client / state / redir-uri
    :oauth-url "https://accounts.spotify.com/authorize?client_id=%s&state=%s&response_type=code&redirect_uri=%s&scope=user-read-private%%20user-read-email%%20playlist-read-collaborative%%20user-modify-playback-state%%20user-read-playback-state"
    })
@@ -215,6 +216,14 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
+(defn my-profile []
+  (let [url (:users-me urls)
+        {:keys [status body headers] :as resp}
+        (wrap-oauth-refresh client/get url {:headers {"Authorization" (str "Bearer " (:access_token @cmn-session/spotify-session))
+                                                      "Content-type" "application/json; charset=utf-8"}})
+        parsed-body (json/parse-string body true)]
+    parsed-body))
+
 ;
 ;(mapv
 ;  (fn [{:keys [id name artists]}]
@@ -283,4 +292,6 @@
         parsed-body (json/parse-string body true)]
     (:data parsed-body)))
 
-;;(verify-authentication nil "bb9b5446-ca72-429c-9a4e-f5c0fea703c3")
+;(verify-authentication
+;  "https://haloof-dev.ngrok.io/spotify/callback"
+;  "9b0e725f-1de1-4682-a900-9ef8b53cf62d")
