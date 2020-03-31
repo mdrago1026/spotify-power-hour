@@ -18,7 +18,8 @@
                ;  [ring/ring-defaults "0.3.1"]
                ;  [ring/ring-codec "1.1.2"]
                  [seesaw "1.5.0"]
-                 [listora/again "1.0.0"]]
+                 [listora/again "1.0.0"]
+                 [ring/ring-codec "1.1.2"]]
   :main ^:skip-aot spotify-power-hour.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
