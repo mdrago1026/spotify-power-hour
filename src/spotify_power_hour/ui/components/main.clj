@@ -38,6 +38,8 @@
           (= (get-in cmn-ui/ui-states [:login :sending-request-to-auth-server]) (new-state :status))
           (invoke-later
             (info "UI STATE: AUTHENTICATING")
+            (config! (select ui [:#login-failed-text]) :visible? false)
+            (config! (select ui [:#login-success-text]) :visible? false)
             (config! (select ui [:#login-button]) :enabled? false)
             (config! (select ui [:#login-spinner]) :visible? true)
             (config! (select ui [:.login-form]) :enabled? false))
@@ -136,15 +138,26 @@
            :scene cmn-ui/ui-scene-login
            :authenticated? false
            :user-info nil
-           :spotify {:playlists []}
+           :spotify {:playlists []
+                     :selected-playlist nil
+                     :selected-playlist-song-count nil}
            :token nil)
     (add-watchers mf)
     (scene-watcher mf)
-    (invoke-later
-      (show! mf)
-      mf)))
+    ;(invoke-later
+    ;  (show! mf)
+    ;  mf)
+
+    mf
+
+    ))
 
 ;;(def ui-context (ui))
 
 
 ;;(dispose! ui-context)
+
+;(def my-ui (ui))
+;
+;(invoke-later
+;  (show! my-ui))

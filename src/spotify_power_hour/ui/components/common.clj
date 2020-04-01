@@ -9,6 +9,7 @@
             [spotify-power-hour.ui.common :as cmn-ui]))
 
 (def user-info-not-logged-in "Not Logged In")
+(def ph-default-playlist-count-text "Selected Playlist Song Count: ")
 
 (defn user-info-panel []
   (mig/mig-panel
