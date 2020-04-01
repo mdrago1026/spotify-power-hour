@@ -89,10 +89,10 @@
              "cell 0 3, align center"]
 
             ;; left off: make the error message show up!
-            [(label :text "Incorrect credentials. Please try again."
+            [(label :text "Failed to login. Please try again."
                     :foreground (color "#ff0000")
                     :visible? false
-                    :id :login-incorrect-text) "cell 0 4, align center"]
+                    :id :login-failed-text) "cell 0 4, align center"]
             [(label :text "Successfully logged in!"
                     :foreground (color "#03fc0f")
                     :visible? false

@@ -48,6 +48,14 @@
             (config! (select ui [:.login-form]) :enabled? false)
             (config! (select ui [:#login-success-text]) :visible? true))
 
+          (= (get-in cmn-ui/ui-states [:login :failed-to-auth]) (new-state :status))
+          (invoke-later
+            (info "UI STATE: LOGIN FAILED")
+            (config! (select ui [:#login-button]) :enabled? true)
+            (config! (select ui [:#login-spinner]) :visible? false)
+            (config! (select ui [:.login-form]) :enabled? true)
+            (config! (select ui [:#login-failed-text]) :visible? true))
+
           (= (get-in cmn-ui/ui-states [:logout :logout]) (new-state :status))
           (invoke-later
             (info "UI STATE: LOGOUT")
@@ -58,10 +66,11 @@
 
             (config! (select ui [:.top-info-logged-in-text])
                      :text cmn-ui-comp/user-info-not-logged-in)
-            (config! (select ui [:#login-client-id])
-                     :text "")
-            (config! (select ui [:#login-redirect-uri])
-                     :text ""))
+            ;(config! (select ui [:#login-client-id])
+            ;         :text "")
+            ;(config! (select ui [:#login-redirect-uri])
+            ;         :text "")
+            )
 
           :else
           (do

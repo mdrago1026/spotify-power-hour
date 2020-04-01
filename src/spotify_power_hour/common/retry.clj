@@ -3,7 +3,7 @@
 
 (def exponential-backoff-strategy
   (again/max-duration
-    30000
+    10000
     (again/max-retries
       10
       (again/randomize-strategy
