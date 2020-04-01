@@ -13,6 +13,15 @@
     :id :login-panel
     :constraints ["fill, flowy"]
     :items [
+            [(label "Power Hour Main Panel (1)") "cell 0 0, grow"]
+            [(label "Power Hour Main Panel (2)") "cell 0 1, grow"]
+            ]))
+
+(defn get-power-hour-wrapper-panel []
+  (mig/mig-panel
+    :id :main-panel
+    :constraints ["fill, flowy"]
+    :items [
             [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
-            [(label "Power Hour Main Panel") "cell 0 0, grow"]
+            [(get-power-hour-main-panel) "cell 0 0, align center"]
             ]))

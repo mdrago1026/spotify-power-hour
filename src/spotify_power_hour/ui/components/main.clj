@@ -13,7 +13,8 @@
             [spotify-power-hour.ui.common :as cmn-ui]
             [spotify-power-hour.ui.components.common :as cmn-ui-comp]
             [spotify-power-hour.ui.components.menubar :as ui-menu]
-            [spotify-power-hour.ui.components.power-hour.main :as ui-ph]))
+            [spotify-power-hour.ui.components.power-hour.main :as ui-ph]
+            [spotify-power-hour.ui.controller :as ui-ctrl]))
 
 (defn get-main-frame [content]
   (let [mf (frame :title cfg-ui/app-name
@@ -95,7 +96,10 @@
           (invoke-later
             (info (format "SCENE STATE CHANGE: Old: (%s), New: (%s)"
                           (:scene old-state) (:scene new-state)))
-            (let [new-scene (condp = (:scene new-state)
+            (let [callback (condp = (:scene new-state)
+                             cmn-ui/ui-scene-power-hour-main ui-ctrl/init-ph-main-scene
+                             nil)
+                  new-scene (condp = (:scene new-state)
                               cmn-ui/ui-scene-power-hour-main (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-main)
                               cmn-ui/ui-scene-login (cmn-ui/get-panel cmn-ui/ui-scene-login)
                               (do
@@ -104,7 +108,8 @@
               (when new-scene
                 (config! (select ui [:#main-frame]) :content new-scene)
                 (config! (select ui [:#main-frame])
-                         :title (str cfg-ui/app-name " -- " (name (:scene new-state))))))))))))
+                         :title (str cfg-ui/app-name " -- " (name (:scene new-state))))
+                (when callback (callback))))))))))
 
 (defn get-login-panel []
   (mig/mig-panel
@@ -115,20 +120,11 @@
             [(ui-login/login-panel) "cell 0 0, align center"]
             ]))
 
-;(defn get-ph-main []
-;  (mig/mig-panel
-;    :id :main-panel
-;    :constraints ["fill, flowy"]
-;    :items [
-;            [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
-;            [(ui-login/login-panel) "cell 0 0, align center"]
-;            ]))
-
 (defn
   ui
   []
   (let [login-panel (get-login-panel)
-        ph-main-panel (ui-ph/get-power-hour-main-panel)
+        ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
         mf (get-main-frame login-panel)
         roots-to-update [login-panel ph-main-panel]]
     (swap! cmn-ui/app-state assoc
@@ -139,8 +135,7 @@
            :status nil
            :scene cmn-ui/ui-scene-login
            :authenticated? false
-           :token nil
-           )
+           :token nil)
     (add-watchers mf)
     (scene-watcher mf)
     (invoke-later
