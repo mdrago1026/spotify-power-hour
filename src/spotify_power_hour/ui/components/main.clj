@@ -11,27 +11,14 @@
              :refer [log trace debug info warn error fatal]]
             [spotify-power-hour.ui.components.login :as ui-login]
             [spotify-power-hour.ui.common :as cmn-ui]
-            [spotify-power-hour.ui.components.common :as cmn-ui-comp])
-  (:import (javax.swing ImageIcon)
-           (java.awt.event KeyEvent)))
-
-(def menu-bar
-  (menubar :items
-           [
-            (menu :text "Menu" :items [])
-            ;(menu :text "Jython" :items [jython-item])
-            ;(menu :text "Slack" :items [slack-emoji-uploader-menu-item
-            ;                            slack-emoji-manage-menu-item])
-            ;(menu :text "Config" :items [config-set-file-limit-item])
-            ;(menu :text "Debug" :items [debug-show-logs-item debug-set-log-level-item])
-            ]))
-
+            [spotify-power-hour.ui.components.common :as cmn-ui-comp]
+            [spotify-power-hour.ui.components.menubar :as ui-menu]))
 
 (defn get-main-frame [content]
   (let [mf (frame :title cfg-ui/app-name
                   :on-close (or (keyword (System/getenv "SEU_ON_CLOSE")) :exit)
                   :content content
-                  :menubar menu-bar
+                  :menubar ui-menu/menu-bar
                   :width cfg-ui/ui-width
                   :height cfg-ui/ui-height
                   ;;    :listen [:component-hidden #_hide-frame-cleanup]
@@ -61,6 +48,20 @@
             (config! (select ui [:.login-form]) :enabled? false)
             (config! (select ui [:#login-success-text]) :visible? true))
 
+          (= (get-in cmn-ui/ui-states [:logout :logout]) (new-state :status))
+          (invoke-later
+            (info "UI STATE: LOGOUT")
+            (config! (select ui [:#login-button]) :enabled? true)
+            (config! (select ui [:#login-spinner]) :visible? false)
+            (config! (select ui [:.login-form]) :enabled? true)
+            (config! (select ui [:#login-success-text]) :visible? false)
+
+            (config! (select ui [:.top-info-logged-in-text])
+                     :text cmn-ui-comp/user-info-not-logged-in)
+            (config! (select ui [:#login-client-id])
+                     :text "")
+            (config! (select ui [:#login-redirect-uri])
+                     :text ""))
 
           :else
           (do
@@ -88,27 +89,19 @@
 (defn
   ui
   []
-
   (let [login-panel (get-login-panel)
         mf (get-main-frame login-panel)
         roots-to-update [login-panel]]
     (swap! cmn-ui/app-state assoc
            :ui-ref mf
            :roots-to-update roots-to-update
-           :panels {}
+           :panels {:login login-panel}
            :status nil
-           :scene cmn-ui/ui-scene-login)
-
-    ;; TODO: need to loop through and add listeners after all panels are made
-    ;(listen (select (cmn/get-panel :halo :login) [:#halo-stats-password]) :key-pressed ui-halo-stats/handle-keys)
+           :scene cmn-ui/ui-scene-login
+           :authenticated? false
+           :token nil
+           )
     (add-watchers mf)
-    ;(add-file-limit-watcher mf)
-    ;(scene-watcher mf)
-    ;(ui-halo-stats/halo-stats-watcher mf)
-    ;(ui-halo-stats/progress-bar-watcher mf)
-    ;(ui-jython/jython-watcher mf)
-    ;(ui-halo-d4d/halo-d4d-watcher mf)
-    ;(ui-slack-manage/slack-manage-emojis-watcher mf)
     (invoke-later
       (show! mf)
       mf)))
