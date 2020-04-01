@@ -46,6 +46,7 @@
             (config! (select ui [:#login-button]) :enabled? false)
             (config! (select ui [:#login-spinner]) :visible? false)
             (config! (select ui [:.login-form]) :enabled? false)
+            (config! (select ui [:#login-failed-text]) :visible? false)
             (config! (select ui [:#login-success-text]) :visible? true))
 
           (= (get-in cmn-ui/ui-states [:login :failed-to-auth]) (new-state :status))
@@ -54,7 +55,8 @@
             (config! (select ui [:#login-button]) :enabled? true)
             (config! (select ui [:#login-spinner]) :visible? false)
             (config! (select ui [:.login-form]) :enabled? true)
-            (config! (select ui [:#login-failed-text]) :visible? true))
+            (config! (select ui [:#login-failed-text]) :visible? true)
+            (config! (select ui [:#login-success-text]) :visible? false))
 
           (= (get-in cmn-ui/ui-states [:logout :logout]) (new-state :status))
           (invoke-later
