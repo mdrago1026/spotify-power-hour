@@ -37,9 +37,13 @@
         (if valid?
           (do
             (info "Successfully authenticated!")
+            (reset! cmn-session/spotify-session (:token response))
+            (let [{:keys [id] :as user-info} (api-spotify/my-profile)]
+              (doseq [root (@cmn-ui/app-state :roots-to-update)]
+                (config! (select root [:.top-info-logged-in-text])
+                         :text (format "Logged in as: %s" id))))
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-                   :authenticated? true)
-            (reset! cmn-session/spotify-session (:token response)))
+                   :authenticated? true))
           (do
             (info "Failed to retrieve user details with error: " response)
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :failed-to-auth])

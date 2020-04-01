@@ -10,7 +10,8 @@
             [taoensso.timbre :as timbre
              :refer [log trace debug info warn error fatal]]
             [spotify-power-hour.ui.components.login :as ui-login]
-            [spotify-power-hour.ui.common :as cmn-ui])
+            [spotify-power-hour.ui.common :as cmn-ui]
+            [spotify-power-hour.ui.components.common :as cmn-ui-comp])
   (:import (javax.swing ImageIcon)
            (java.awt.event KeyEvent)))
 
@@ -63,7 +64,7 @@
 
           :else
           (do
-          ;;  (error (format "Unknown UI state: %s" (new-state :status)))
+            ;;  (error (format "Unknown UI state: %s" (new-state :status)))
             (invoke-later
               (info "UI STATE: NIL")
               (config! (select ui [:#login-button]) :enabled? true)
@@ -72,16 +73,28 @@
               (config! (select ui [:#login-success-text]) :visible? false)
               )))))))
 
+
+;; top-info-pane (cmn-ui-comp/user-info-panel)
+
+(defn get-login-panel []
+  (mig/mig-panel
+    :id :main-panel
+    :constraints ["fill, flowy"]
+    :items [
+            [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
+            [(ui-login/login-panel) "cell 0 0, align center"]
+            ]))
+
 (defn
   ui
   []
 
-  (let [mf (get-main-frame (ui-login/login-panel))
-        ;; roots-to-update [slack-manage-main-panel slack-upload-main-panel slack-upload-login-panel]
-        ]
+  (let [login-panel (get-login-panel)
+        mf (get-main-frame login-panel)
+        roots-to-update [login-panel]]
     (swap! cmn-ui/app-state assoc
            :ui-ref mf
-          ;; :roots-to-update roots-to-update
+           :roots-to-update roots-to-update
            :panels {}
            :status nil
            :scene cmn-ui/ui-scene-login)
@@ -100,4 +113,4 @@
       (show! mf)
       mf)))
 
-(ui)
+;;(ui)
