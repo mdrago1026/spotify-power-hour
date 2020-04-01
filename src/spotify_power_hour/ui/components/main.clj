@@ -109,7 +109,7 @@
                 (config! (select ui [:#main-frame]) :content new-scene)
                 (config! (select ui [:#main-frame])
                          :title (str cfg-ui/app-name " -- " (name (:scene new-state))))
-                (when callback (callback))))))))))
+                (when callback (callback ui))))))))))
 
 (defn get-login-panel []
   (mig/mig-panel
@@ -135,6 +135,8 @@
            :status nil
            :scene cmn-ui/ui-scene-login
            :authenticated? false
+           :user-info nil
+           :spotify {:playlists []}
            :token nil)
     (add-watchers mf)
     (scene-watcher mf)
@@ -143,5 +145,6 @@
       mf)))
 
 ;;(def ui-context (ui))
+
 
 ;;(dispose! ui-context)

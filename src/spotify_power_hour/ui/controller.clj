@@ -25,6 +25,7 @@
   (swap! ui-cmn/app-state assoc
          :authenticated? false
          :token nil
+         :user-info nil
          :scene cmn-ui/ui-scene-login
          :status (get-in cmn-ui/ui-states [:logout :logout])))
 
@@ -54,10 +55,11 @@
             (reset! cmn-session/spotify-session (:token response))
             (let [{:keys [id] :as user-info} (api-spotify/my-profile)
                   new-text (format "Logged in as: %s" id)]
-              (cmn-comp/update-shared-user-info-component new-text))
-            (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-                   :authenticated? true
-                   :scene cmn-ui/ui-scene-power-hour-main))
+              (cmn-comp/update-shared-user-info-component new-text)
+              (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
+                     :authenticated? true
+                     :user-info user-info
+                     :scene cmn-ui/ui-scene-power-hour-main)))
           (do
             (info "Failed to retrieve user details with error: " response)
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :failed-to-auth])
@@ -66,5 +68,27 @@
 
 ;; CALLBACKS
 
-(defn init-ph-main-scene []
-  (info "Power Hour Main Scene INIT Callback FUNC!"))
+(defn get-spotify-plalysts-for-user-id
+  "Given a spotify user-id, returns a sorted (lexa, asc) vec of maps with :name/:id for each playlist"
+  [user-id]
+  (let [spotify-api-url (format (:playlists-get api-spotify/urls) user-id)
+        user-playlists (vec (api-spotify/handle-paginated-requests
+                              spotify-api-url))
+        mapped-playlists (sort-by :name (mapv #(select-keys % [:name :id]) user-playlists))]
+    mapped-playlists))
+
+(defn init-ph-main-scene [ui]
+  (invoke-later
+    (info "Power Hour Main Scene INIT Callback FUNC!")
+    (config! (select ui [:#ph-main-select]) :enabled? false)
+    (config! (select ui [:#ph-main-select-spinner]) :visible? false)
+    (let [{:keys [id] :as user-info} (:user-info @cmn-ui/app-state)
+          sorted-playlists (get-spotify-plalysts-for-user-id id)]
+      (swap! cmn-ui/app-state assoc-in [:spotify :playlists] sorted-playlists)
+      (config! (select ui [:#ph-main-select]) :model sorted-playlists)
+      (config! (select ui [:#ph-main-select]) :enabled? true)
+      (config! (select ui [:#ph-main-select-spinner]) :visible? false)
+      sorted-playlists)))
+
+;;(get-spotify-plalysts-for-user-id  "mdrago1026")
+

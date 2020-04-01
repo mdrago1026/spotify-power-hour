@@ -18,4 +18,3 @@
     (throw (ex-info (format "Could not find panel")
                     {:panel-kws      panel-kws
                      :current-panels (-> (get-in @app-state [:panels]) keys)}))))
-

@@ -224,49 +224,6 @@
         parsed-body (json/parse-string body true)]
     parsed-body))
 
-;
-;(mapv
-;  (fn [{:keys [id name artists]}]
-;    {:id id
-;     :track-name name
-;     :artists (-> artists first :name)}
-;    ) (-> (search "fAr AWAY") :tracks :items))
-;
-;(-> (search "fAr AWAY") :tracks :items)
-;
-;(search "fAr AWAY")
-
-;;(queue-song "2lpcY0lROi0khLsnBCMp1W")
-
-;;(start-playing "2129f633235a6ec17e1317d165a73eb6eb21d9b1")
-
-;(play-song-from-ms
-;  "2129f633235a6ec17e1317d165a73eb6eb21d9b1"
-;  "2lpcY0lROi0khLsnBCMp1W"
-;  (* 1000 190.20936)
-;  )
-
-;;(get-active-devices)
-
-;;(track-id->analysis "2lpcY0lROi0khLsnBCMp1W")
-
-;(def my-user-playlists (handle-paginated-requests (format (:playlists-get urls) "mdrago1026")))
-;
-;(def halo-night-playlist-id (-> (filter-playlist-by-name "HALO nighT" my-user-playlists) first :id))
-;(def halo-night-songs (plalyist-id->track-list halo-night-playlist-id))
-;
-;
-;(def halo-night-songs
-;  (handle-paginated-requests (format (:playlists-list-songs urls) halo-night-playlist-id)))
-;
-;;;(count halo-night-songs)
-;
-;(first halo-night-songs)
-
-
-
-
-
 
 ;;; UI SPECIFIC STUFF
 
@@ -295,3 +252,4 @@
 ;(verify-authentication
 ;  "https://haloof-dev.ngrok.io/spotify/callback"
 ;  "9b0e725f-1de1-4682-a900-9ef8b53cf62d")
+
