@@ -13,7 +13,8 @@
             [clojure.java.browse :as browse]
             [spotify-power-hour.ui.common :as cmn-ui]
             [spotify-power-hour.controller.spotify :as ctrl-spotify]
-            [spotify-power-hour.common.session :as cmn-session])
+            [spotify-power-hour.common.session :as cmn-session]
+            [spotify-power-hour.ui.components.common :as cmn-comp])
   (:import (java.awt.event KeyEvent)
            (javax.swing ImageIcon)))
 
@@ -38,12 +39,12 @@
           (do
             (info "Successfully authenticated!")
             (reset! cmn-session/spotify-session (:token response))
-            (let [{:keys [id] :as user-info} (api-spotify/my-profile)]
-              (doseq [root (@cmn-ui/app-state :roots-to-update)]
-                (config! (select root [:.top-info-logged-in-text])
-                         :text (format "Logged in as: %s" id))))
+            (let [{:keys [id] :as user-info} (api-spotify/my-profile)
+                  new-text (format "Logged in as: %s" id)]
+              (cmn-comp/update-shared-user-info-component new-text))
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-                   :authenticated? true))
+                   :authenticated? true
+                   :scene cmn-ui/ui-scene-power-hour-main))
           (do
             (info "Failed to retrieve user details with error: " response)
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :failed-to-auth])

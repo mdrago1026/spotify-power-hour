@@ -12,7 +12,8 @@
             [spotify-power-hour.ui.components.login :as ui-login]
             [spotify-power-hour.ui.common :as cmn-ui]
             [spotify-power-hour.ui.components.common :as cmn-ui-comp]
-            [spotify-power-hour.ui.components.menubar :as ui-menu]))
+            [spotify-power-hour.ui.components.menubar :as ui-menu]
+            [spotify-power-hour.ui.components.power-hour.main :as ui-ph]))
 
 (defn get-main-frame [content]
   (let [mf (frame :title cfg-ui/app-name
@@ -75,18 +76,35 @@
             )
 
           :else
-          (do
-            ;;  (error (format "Unknown UI state: %s" (new-state :status)))
-            (invoke-later
-              (info "UI STATE: NIL")
-              (config! (select ui [:#login-button]) :enabled? true)
-              (config! (select ui [:#login-spinner]) :visible? false)
-              (config! (select ui [:.login-form]) :enabled? true)
-              (config! (select ui [:#login-success-text]) :visible? false)
-              )))))))
+          ;;  (error (format "Unknown UI state: %s" (new-state :status)))
+          (invoke-later
+            (info "UI STATE: NIL")
+            (config! (select ui [:#login-button]) :enabled? true)
+            (config! (select ui [:#login-spinner]) :visible? false)
+            (config! (select ui [:.login-form]) :enabled? true)
+            (config! (select ui [:#login-success-text]) :visible? false)
+            ))))))
 
-
-;; top-info-pane (cmn-ui-comp/user-info-panel)
+(defn scene-watcher [ui]
+  (add-watch
+    cmn-ui/app-state :scene-watcher
+    (fn [_ _ old-state new-state]
+      (when (:scene new-state)
+        (cond
+          (not= (:scene old-state) (:scene new-state))
+          (invoke-later
+            (info (format "SCENE STATE CHANGE: Old: (%s), New: (%s)"
+                          (:scene old-state) (:scene new-state)))
+            (let [new-scene (condp = (:scene new-state)
+                              cmn-ui/ui-scene-power-hour-main (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-main)
+                              cmn-ui/ui-scene-login (cmn-ui/get-panel cmn-ui/ui-scene-login)
+                              (do
+                                (info "Unknown scene: " (:scene new-state))
+                                nil))]
+              (when new-scene
+                (config! (select ui [:#main-frame]) :content new-scene)
+                (config! (select ui [:#main-frame])
+                         :title (str cfg-ui/app-name " -- " (name (:scene new-state))))))))))))
 
 (defn get-login-panel []
   (mig/mig-panel
@@ -97,24 +115,38 @@
             [(ui-login/login-panel) "cell 0 0, align center"]
             ]))
 
+;(defn get-ph-main []
+;  (mig/mig-panel
+;    :id :main-panel
+;    :constraints ["fill, flowy"]
+;    :items [
+;            [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
+;            [(ui-login/login-panel) "cell 0 0, align center"]
+;            ]))
+
 (defn
   ui
   []
   (let [login-panel (get-login-panel)
+        ph-main-panel (ui-ph/get-power-hour-main-panel)
         mf (get-main-frame login-panel)
-        roots-to-update [login-panel]]
+        roots-to-update [login-panel ph-main-panel]]
     (swap! cmn-ui/app-state assoc
            :ui-ref mf
            :roots-to-update roots-to-update
-           :panels {:login login-panel}
+           :panels {cmn-ui/ui-scene-login login-panel
+                    cmn-ui/ui-scene-power-hour-main ph-main-panel}
            :status nil
            :scene cmn-ui/ui-scene-login
            :authenticated? false
            :token nil
            )
     (add-watchers mf)
+    (scene-watcher mf)
     (invoke-later
       (show! mf)
       mf)))
 
-;;(ui)
+;;(def ui-context (ui))
+
+;;(dispose! ui-context)
