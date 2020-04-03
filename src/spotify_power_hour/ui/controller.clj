@@ -88,6 +88,7 @@
       (config! (select ui [:#ph-main-select-playlist]) :model sorted-playlists)
       (config! (select ui [:#ph-main-select-playlist]) :enabled? true)
       (config! (select ui [:#ph-main-select-spinner]) :visible? false)
+      (selection! (select ui [:#ph-main-select-playlist]) (first (get-in @cmn-ui/app-state [:spotify :playlists])))
       sorted-playlists)))
 
 ;;(get-spotify-plalysts-for-user-id  "mdrago1026")
@@ -130,16 +131,15 @@
   [playlist-id]
   (let [spotify-api-url (format (:playlists-list-songs api-spotify/urls) playlist-id)
         song-list (vec (api-spotify/handle-paginated-requests
-                              spotify-api-url))
+                         spotify-api-url))
         formatted-song-list (vec-of-track-objs->relative-ph-data song-list)]
     formatted-song-list))
 
 ;;(spotify-playlist-id->songs "75M2u29GVTzqp5q6p51IRC")
 
 (defn ph-select-playlist [e {:keys [id name] :as selection}]
-  (info "SELECTION2: "selection)
   (invoke-later
-    (info "Playlist selected: "selection)
+    (info "Playlist selected: " selection)
     (let [song-list (spotify-playlist-id->songs id)
           song-count (count song-list)
           final-text (str cmn-comp/ph-default-playlist-count-text song-count)
@@ -149,7 +149,7 @@
           below-min? (< song-count min-song-count)
           below-max? (< song-count max-song-count)]
       ;; update model to only have valid song count choices
-      (if below-max? ;; if we are below the max, ie: 50, 42, 31,
+      (if below-max?                                        ;; if we are below the max, ie: 50, 42, 31,
         (let [filtered-option-set (filter #(< % song-count) cmn-ui/ui-ph-song-count-defaults)
               song-count-already-option? (contains? option-set song-count) ;; don't want it there twice
               final-vec (if (and
@@ -160,18 +160,19 @@
                           (conj filtered-option-set song-count)
                           filtered-option-set)]
           (config! (select (to-root e) [:#ph-main-select-song-count]) :model final-vec)
-          (selection! (select (to-root e) [:#ph-main-select-song-count]) (first final-vec))
-          )
+          (selection! (select (to-root e) [:#ph-main-select-song-count]) (first final-vec)))
         ;; otherwise, reset to the defaults
         (config! (select (to-root e) [:#ph-main-select-song-count]) :model cmn-ui/ui-ph-song-count-defaults))
 
       (config! (select (to-root e) [:#ph-main-selected-playlist-song-count-label]) :text final-text)
-      (info "Song count: "song-count)
+      (info "Song count: " song-count)
 
       (if below-min?
-        (config! (select (to-root e) [:#ph-main-not-enough-songs-error])
-                 :text (format cmn-comp/ph-selected-playlist-not-enough-songs min-song-count)
-                 :visible? true)
+        (do
+          (config! (select (to-root e) [:#ph-main-not-enough-songs-error])
+                   :text (format cmn-comp/ph-selected-playlist-not-enough-songs min-song-count)
+                   :visible? true)
+          (config! (select (to-root e) [:#ph-main-start-ph-btn]) :visible? false))
         ;; if we have >= 60 songs in the selected playlist
         (do
           (selection! (select (to-root e) [:#ph-main-select-song-count]) max-song-count)
@@ -180,3 +181,7 @@
 
 
 ;; (config! (select ui [:#ph-main-select-song-count]) :enabled? true)
+
+(defn ph-handle-song-count-select [e selection]
+  (info "Selected song count: " selection)
+  (config! (select (to-root e) [:#ph-main-start-ph-btn]) :visible? true))
