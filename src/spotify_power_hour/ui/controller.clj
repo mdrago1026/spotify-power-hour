@@ -142,18 +142,41 @@
     (info "Playlist selected: "selection)
     (let [song-list (spotify-playlist-id->songs id)
           song-count (count song-list)
-          final-text (str cmn-comp/ph-default-playlist-count-text song-count)]
-
-      ;;; LEFT OFF:
-      ;;; Here. ngrok went down lol
+          final-text (str cmn-comp/ph-default-playlist-count-text song-count)
+          min-song-count (last cmn-ui/ui-ph-song-count-defaults)
+          max-song-count (first cmn-ui/ui-ph-song-count-defaults)
+          option-set (set cmn-ui/ui-ph-song-count-defaults)
+          below-min? (< song-count min-song-count)
+          below-max? (< song-count max-song-count)]
+      ;; update model to only have valid song count choices
+      (if below-max? ;; if we are below the max, ie: 50, 42, 31,
+        (let [filtered-option-set (filter #(< % song-count) cmn-ui/ui-ph-song-count-defaults)
+              song-count-already-option? (contains? option-set song-count) ;; don't want it there twice
+              final-vec (if (and
+                              ;; if the selected playlist song count is not already a default
+                              (not song-count-already-option?)
+                              ;; if we filtered anything out at all, add the actual song count as the final
+                              (not= (count cmn-ui/ui-ph-song-count-defaults) (count filtered-option-set)))
+                          (conj filtered-option-set song-count)
+                          filtered-option-set)]
+          (config! (select (to-root e) [:#ph-main-select-song-count]) :model final-vec)
+          (selection! (select (to-root e) [:#ph-main-select-song-count]) (first final-vec))
+          )
+        ;; otherwise, reset to the defaults
+        (config! (select (to-root e) [:#ph-main-select-song-count]) :model cmn-ui/ui-ph-song-count-defaults))
 
       (config! (select (to-root e) [:#ph-main-selected-playlist-song-count-label]) :text final-text)
       (info "Song count: "song-count)
-      )
-    )
-  )
 
-
+      (if below-min?
+        (config! (select (to-root e) [:#ph-main-not-enough-songs-error])
+                 :text (format cmn-comp/ph-selected-playlist-not-enough-songs min-song-count)
+                 :visible? true)
+        ;; if we have >= 60 songs in the selected playlist
+        (do
+          (selection! (select (to-root e) [:#ph-main-select-song-count]) max-song-count)
+          (config! (select (to-root e) [:#ph-main-not-enough-songs-error]) :visible? false)
+          (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? true))))))
 
 
 ;; (config! (select ui [:#ph-main-select-song-count]) :enabled? true)

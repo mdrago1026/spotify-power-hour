@@ -4,7 +4,7 @@
 
 (def ui-scene-login :login-form-scene)
 (def ui-scene-power-hour-main :power-hour-main)
-(def ui-ph-song-count-defaults [15 30 45 60])
+(def ui-ph-song-count-defaults (vec (reverse (drop 1 (take-nth 5 (range 0 61))))))
 
 (def ui-states
   {:login {:sending-request-to-auth-server :sending-request-to-auth-server

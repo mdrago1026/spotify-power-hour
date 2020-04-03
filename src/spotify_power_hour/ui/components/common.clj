@@ -10,6 +10,7 @@
 
 (def user-info-not-logged-in "Not Logged In")
 (def ph-default-playlist-count-text "Selected Playlist Song Count: ")
+(def ph-selected-playlist-not-enough-songs "Selected playlist must have at least %s songs")
 
 (defn user-info-panel []
   (mig/mig-panel

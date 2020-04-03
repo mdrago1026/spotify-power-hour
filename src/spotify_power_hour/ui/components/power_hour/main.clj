@@ -16,14 +16,16 @@
 
 (defn get-power-hour-main-panel []
   (let [song-count-cb (combobox
-                        :model [15 30 45 60]
+                        :model ui-cmn/ui-ph-song-count-defaults
                         :enabled? false
                         :renderer (fn [this {:keys [value]}]
-                                    (text! this
-                                           (:name value)))
-                        ;:listen [:selection (fn [e]
-                        ;                      (let [selection (selection (select (cmn-ui/get-panel :ph-main-panel) [:#jython-select-script-cb]))])
-                        ;                      ) ui-ctrl/ph-select-playlist]
+                                    (text! this value))
+                        :listen [:selection (fn [e]
+                                              (let [selection (selection (select (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-main)
+                                                                                 [:#ph-main-select-song-count]))]
+                                                (info "Song count selection: "selection)
+                                                )
+                                              )]
                         :id :ph-main-select-song-count)
         playlist-cb (combobox
                       :model []
@@ -50,6 +52,10 @@
               [(label :icon (ImageIcon. (io/resource "ajax-loader.gif"))
                       :id :ph-main-select-spinner :visible? false)
                "cell 0 3, align center"]
+              [(label :text "Selected playlists does not have minimum number of songs"
+                      :foreground (color "#ff0000")
+                      :visible? false
+                      :id :ph-main-not-enough-songs-error) "cell 0 4, align center"]
               ])))
 
 (defn get-power-hour-wrapper-panel []
