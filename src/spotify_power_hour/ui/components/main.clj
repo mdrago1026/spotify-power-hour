@@ -14,6 +14,8 @@
             [spotify-power-hour.ui.components.common :as cmn-ui-comp]
             [spotify-power-hour.ui.components.menubar :as ui-menu]
             [spotify-power-hour.ui.components.power-hour.main :as ui-ph]
+            [spotify-power-hour.ui.components.power-hour.loading :as ui-ph-load]
+            [spotify-power-hour.ui.components.power-hour.start :as ui-ph-start]
             [spotify-power-hour.ui.controller :as ui-ctrl]))
 
 (defn get-main-frame [content]
@@ -33,60 +35,65 @@
   (add-watch
     cmn-ui/app-state :cmn-ui/app-state
     (fn [_ _ old new-state]
-      (when (= cmn-ui/ui-scene-login (:scene new-state))
-        (cond
-          (= (get-in cmn-ui/ui-states [:login :sending-request-to-auth-server]) (new-state :status))
-          (invoke-later
-            (info "UI STATE: AUTHENTICATING")
-            (config! (select ui [:#login-failed-text]) :visible? false)
-            (config! (select ui [:#login-success-text]) :visible? false)
-            (config! (select ui [:#login-button]) :enabled? false)
-            (config! (select ui [:#login-spinner]) :visible? true)
-            (config! (select ui [:.login-form]) :enabled? false))
+      (cond
+        (not= (get-in old [:spotify :song-data-loaded]) (get-in old [:spotify :loading-percent]))
+        (invoke-later
+          (let [new-formatted-val (* 100 (/ (double (get-in old [:spotify :song-data-loaded]))
+                                            (double (get-in new-state [:spotify :selected-playlist-song-count]))))]
+            (config! (select (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading) [:#ph-loading-progress-bar])
+                     :value new-formatted-val)))
 
-          (= (get-in cmn-ui/ui-states [:login :successfully-authed]) (new-state :status))
-          (invoke-later
-            (info "UI STATE: SUCCESSFULLY AUTHED")
-            (config! (select ui [:#login-button]) :enabled? false)
-            (config! (select ui [:#login-spinner]) :visible? false)
-            (config! (select ui [:.login-form]) :enabled? false)
-            (config! (select ui [:#login-failed-text]) :visible? false)
-            (config! (select ui [:#login-success-text]) :visible? true))
+        (= cmn-ui/ui-scene-login (:scene new-state))
+        (cond (= (get-in cmn-ui/ui-states [:login :sending-request-to-auth-server]) (new-state :status))
+              (invoke-later
+                (info "UI STATE: AUTHENTICATING")
+                (config! (select ui [:#login-failed-text]) :visible? false)
+                (config! (select ui [:#login-success-text]) :visible? false)
+                (config! (select ui [:#login-button]) :enabled? false)
+                (config! (select ui [:#login-spinner]) :visible? true)
+                (config! (select ui [:.login-form]) :enabled? false))
 
-          (= (get-in cmn-ui/ui-states [:login :failed-to-auth]) (new-state :status))
-          (invoke-later
-            (info "UI STATE: LOGIN FAILED")
-            (config! (select ui [:#login-button]) :enabled? true)
-            (config! (select ui [:#login-spinner]) :visible? false)
-            (config! (select ui [:.login-form]) :enabled? true)
-            (config! (select ui [:#login-failed-text]) :visible? true)
-            (config! (select ui [:#login-success-text]) :visible? false))
+              (= (get-in cmn-ui/ui-states [:login :successfully-authed]) (new-state :status))
+              (invoke-later
+                (info "UI STATE: SUCCESSFULLY AUTHED")
+                (config! (select ui [:#login-button]) :enabled? false)
+                (config! (select ui [:#login-spinner]) :visible? false)
+                (config! (select ui [:.login-form]) :enabled? false)
+                (config! (select ui [:#login-failed-text]) :visible? false)
+                (config! (select ui [:#login-success-text]) :visible? true))
 
-          (= (get-in cmn-ui/ui-states [:logout :logout]) (new-state :status))
-          (invoke-later
-            (info "UI STATE: LOGOUT")
-            (config! (select ui [:#login-button]) :enabled? true)
-            (config! (select ui [:#login-spinner]) :visible? false)
-            (config! (select ui [:.login-form]) :enabled? true)
-            (config! (select ui [:#login-success-text]) :visible? false)
+              (= (get-in cmn-ui/ui-states [:login :failed-to-auth]) (new-state :status))
+              (invoke-later
+                (info "UI STATE: LOGIN FAILED")
+                (config! (select ui [:#login-button]) :enabled? true)
+                (config! (select ui [:#login-spinner]) :visible? false)
+                (config! (select ui [:.login-form]) :enabled? true)
+                (config! (select ui [:#login-failed-text]) :visible? true)
+                (config! (select ui [:#login-success-text]) :visible? false))
 
-            (config! (select ui [:.top-info-logged-in-text])
-                     :text cmn-ui-comp/user-info-not-logged-in)
-            ;(config! (select ui [:#login-client-id])
-            ;         :text "")
-            ;(config! (select ui [:#login-redirect-uri])
-            ;         :text "")
-            )
+              (= (get-in cmn-ui/ui-states [:logout :logout]) (new-state :status))
+              (invoke-later
+                (info "UI STATE: LOGOUT")
+                (config! (select ui [:#login-button]) :enabled? true)
+                (config! (select ui [:#login-spinner]) :visible? false)
+                (config! (select ui [:.login-form]) :enabled? true)
+                (config! (select ui [:#login-success-text]) :visible? false)
 
-          :else
-          ;;  (error (format "Unknown UI state: %s" (new-state :status)))
-          (invoke-later
-            (info "UI STATE: NIL")
-            (config! (select ui [:#login-button]) :enabled? true)
-            (config! (select ui [:#login-spinner]) :visible? false)
-            (config! (select ui [:.login-form]) :enabled? true)
-            (config! (select ui [:#login-success-text]) :visible? false)
-            ))))))
+                (config! (select ui [:.top-info-logged-in-text])
+                         :text cmn-ui-comp/user-info-not-logged-in)))
+
+
+        :else
+        ;;  (error (format "Unknown UI state: %s" (new-state :status)))
+        (invoke-later
+          (info "UI STATE: NIL")
+          (config! (select ui [:#login-button]) :enabled? true)
+          (config! (select ui [:#login-spinner]) :visible? false)
+          (config! (select ui [:.login-form]) :enabled? true)
+          (config! (select ui [:#login-success-text]) :visible? false)
+          ))
+      ;;)
+      )))
 
 (defn scene-watcher [ui]
   (add-watch
@@ -100,17 +107,20 @@
                           (:scene old-state) (:scene new-state)))
             (let [callback (condp = (:scene new-state)
                              cmn-ui/ui-scene-power-hour-main ui-ctrl/init-ph-main-scene
+                             cmn-ui/ui-scene-power-hour-loading ui-ctrl/init-ph-load
                              nil)
                   new-scene (condp = (:scene new-state)
                               cmn-ui/ui-scene-power-hour-main (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-main)
                               cmn-ui/ui-scene-login (cmn-ui/get-panel cmn-ui/ui-scene-login)
+                              cmn-ui/ui-scene-power-hour-loading (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading)
+                              cmn-ui/ui-scene-power-hour-start (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-start)
                               (do
                                 (info "Unknown scene: " (:scene new-state))
                                 nil))]
               (when new-scene
                 (config! (select ui [:#main-frame]) :content new-scene)
                 (config! (select ui [:#main-frame])
-                         :title (str cfg-ui/app-name " -- " (name (:scene new-state))))
+                         :title (str cfg-ui/app-name " : " (name (:scene new-state))))
                 (when callback (callback ui))))))))))
 
 (defn get-login-panel []
@@ -127,20 +137,25 @@
   []
   (let [login-panel (get-login-panel)
         ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
+        ph-loading-panel (ui-ph-load/get-power-hour-loading-wrapper-panel)
+        ph-start-panel (ui-ph-start/get-power-hour-start-wrapper-panel)
         mf (get-main-frame login-panel)
-        roots-to-update [login-panel ph-main-panel]]
+        roots-to-update [login-panel ph-main-panel ph-loading-panel ph-start-panel]]
     (swap! cmn-ui/app-state assoc
            :ui-ref mf
            :roots-to-update roots-to-update
            :panels {cmn-ui/ui-scene-login login-panel
-                    cmn-ui/ui-scene-power-hour-main ph-main-panel}
+                    cmn-ui/ui-scene-power-hour-main ph-main-panel
+                    cmn-ui/ui-scene-power-hour-loading ph-loading-panel
+                    cmn-ui/ui-scene-power-hour-start ph-start-panel}
            :status nil
            :scene cmn-ui/ui-scene-login
            :authenticated? false
            :user-info nil
            :spotify {:playlists []
-                     :selected-playlist nil
-                     :selected-playlist-song-count nil}
+                     :selected-playlist-songs nil
+                     :selected-playlist-song-count 0
+                     :song-data-loaded 0}
            :token nil)
     (add-watchers mf)
     (scene-watcher mf)
@@ -152,11 +167,8 @@
 
     ))
 
-;;(def ui-context (ui))
 
-
-;;(dispose! ui-context)
-
+;
 ;(def my-ui (ui))
 ;
 ;(invoke-later

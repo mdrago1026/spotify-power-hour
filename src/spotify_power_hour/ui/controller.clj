@@ -117,15 +117,22 @@
     (first winning-section)))
 
 (defn vec-of-track-objs->relative-ph-data [data]
-  (vec (pmap (fn [{{duration-ms :duration_ms track-id :id
-                    track-name :name :as track} :track}]
-               {:track-id track-id
-                :duration-ms duration-ms
-                :track-name track-name
-                :artist-name (-> track :artists first :name)
-                ;:start-section (track-info->get-start-time {:duration-ms duration-ms
-                ;                                            :track-id track-id})
-                }) data)))
+  (vec (map (fn [{{duration-ms :duration_ms track-id :id
+                   track-name :name :as track} :track}]
+              {:track-id track-id
+               :duration-ms duration-ms
+               :track-name track-name
+               :artist-name (-> track :artists first :name)
+               ;:start-section (track-info->get-start-time {:duration-ms duration-ms
+               ;                                            :track-id track-id})
+               }) data)))
+
+(defn add-start-time-to-relative-ph-data [data]
+  (vec (map (fn [{:keys [track-id duration-ms] :as c}]
+              (swap! cmn-ui/app-state update-in [:spotify :song-data-loaded] inc)
+               (assoc c :start-section
+                        (track-info->get-start-time {:duration-ms duration-ms
+                                                     :track-id track-id}))) data)))
 
 (defn spotify-playlist-id->songs
   [playlist-id]
@@ -137,8 +144,18 @@
 
 ;;(spotify-playlist-id->songs "75M2u29GVTzqp5q6p51IRC")
 
+(defn util-stop-loading-song-count [e]
+  (config! (select (to-root e) [:#ph-main-select-playlist]) :enabled? true)
+  (config! (select (to-root e) [:#ph-main-select-spinner]) :visible? false)
+  (config! (select (to-root e) [:#ph-main-start-ph-btn]) :enabled? true)
+  (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? true))
+
 (defn ph-select-playlist [e {:keys [id name] :as selection}]
   (invoke-later
+    (config! (select (to-root e) [:#ph-main-select-playlist]) :enabled? false)
+    (config! (select (to-root e) [:#ph-main-select-spinner]) :visible? true)
+    (config! (select (to-root e) [:#ph-main-start-ph-btn]) :enabled? false)
+    (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? false)
     (info "Playlist selected: " selection)
     (let [song-list (spotify-playlist-id->songs id)
           song-count (count song-list)
@@ -148,6 +165,8 @@
           option-set (set cmn-ui/ui-ph-song-count-defaults)
           below-min? (< song-count min-song-count)
           below-max? (< song-count max-song-count)]
+      (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs] song-list)
+      (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-song-count] song-count)
       ;; update model to only have valid song count choices
       (if below-max?                                        ;; if we are below the max, ie: 50, 42, 31,
         (let [filtered-option-set (filter #(< % song-count) cmn-ui/ui-ph-song-count-defaults)
@@ -177,7 +196,9 @@
         (do
           (selection! (select (to-root e) [:#ph-main-select-song-count]) max-song-count)
           (config! (select (to-root e) [:#ph-main-not-enough-songs-error]) :visible? false)
-          (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? true))))))
+          (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? true)))
+
+      (util-stop-loading-song-count e))))
 
 
 ;; (config! (select ui [:#ph-main-select-song-count]) :enabled? true)
@@ -185,3 +206,27 @@
 (defn ph-handle-song-count-select [e selection]
   (info "Selected song count: " selection)
   (config! (select (to-root e) [:#ph-main-start-ph-btn]) :visible? true))
+
+(defn handle-start-ph [e]
+  (swap! cmn-ui/app-state assoc
+         :status (get-in cmn-ui/ui-states [:ph :retrieving-song-starts])
+         :scene cmn-ui/ui-scene-power-hour-loading))
+
+(defn init-ph-load [mf]
+  (future
+    (info "Init PH Start callback")
+    (swap! cmn-ui/app-state assoc-in [:spotify :song-data-loaded] 0)
+    (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
+          add-start-times (add-start-time-to-relative-ph-data current-song-data)]
+      (info "Done getting song data")
+      (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs] add-start-times)
+      (swap! cmn-ui/app-state assoc
+             :status (get-in cmn-ui/ui-states [:ph :ready-to-start])
+             :scene ui-cmn/ui-scene-power-hour-start))))
+
+(defn init-ph-start [mf]
+  (info "Init PH START!")
+  )
+
+
+

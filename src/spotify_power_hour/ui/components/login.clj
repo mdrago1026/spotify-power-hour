@@ -57,8 +57,6 @@
             [(label :icon (ImageIcon. (io/resource "ajax-loader.gif"))
                     :id :login-spinner :visible? false)
              "cell 0 3, align center"]
-
-            ;; left off: make the error message show up!
             [(label :text "Failed to login. Please try again."
                     :foreground (color "#ff0000")
                     :visible? false
@@ -74,7 +72,5 @@
     :id :login-panel
     :constraints ["fill, flowy"]
     :items [
-            ;;[slack-top-info-panel "cell 0 0, aligny top, growx"]
             [login-form "cell 0 0, align center"]
-            ;;[(btm-info-pane) "cell 0 2, grow"]
             ]))

@@ -64,7 +64,8 @@
                        :visible? false
                        :class :ph-main
                        :listen [:action (fn [e]
-                                          (info "CLICKED START PH!!!"))]
+                                          (info "CLICKED START PH!!!")
+                                          (ui-ctrl/handle-start-ph e))]
                        :id :ph-main-start-ph-btn)
                "cell 0 5, align center"]
               ])))

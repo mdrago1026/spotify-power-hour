@@ -2,5 +2,6 @@
 
 (def spotify-search-min-char 3)
 (def spotify-uri-track-length 22)
+(def max-power-hour-length-min 60)
 
 (def spotify-verify-uri "spotify/callback/verify-ui?state=%s")

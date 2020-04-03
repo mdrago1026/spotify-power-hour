@@ -42,6 +42,7 @@
 
 ;; TODO:: this needs to be cleaned/loopified
 (defn wrap-oauth-refresh [http-fn & args]
+  (info "ARGS: "args)
   (try
     (if args
       (let [arg-map (nth args 1)
@@ -253,3 +254,5 @@
 ;  "https://haloof-dev.ngrok.io/spotify/callback"
 ;  "9b0e725f-1de1-4682-a900-9ef8b53cf62d")
 
+
+;;(track-id->analysis "2lpcY0lROi0khLsnBCMp1W")
