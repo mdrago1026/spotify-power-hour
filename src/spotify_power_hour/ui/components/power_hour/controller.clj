@@ -18,25 +18,27 @@
   (mig/mig-panel
     :id :ph-controller-panel
     :constraints ["fill, flowy, debug"]
-    :items [[(button :text "<-"
-                     :class :login-form
+    :items [[(button :text "Prev"
+                     :class :ph-ctrl
                     ;; :listen [:action ui-ctrl/handle-client-id-submit]
-                     :id :login-button)
+                     :id :ph-ctrl-prev-btn)
              "cell 0 2"]
-            [(button :text "->"
-                     :class :login-form
+            [(button :text "Next"
+                     :class :ph-ctrl
                      ;; :listen [:action ui-ctrl/handle-client-id-submit]
-                     :id :login-button)
+                     :id :ph-ctrl-next-btn)
              "cell 3 2"]
 
-            [(label :icon "https://i.scdn.co/image/ab67616d00001e021522bd2a4ea3d69e17f19429")
+            [(label :icon "https://i.scdn.co/image/ab67616d00001e021522bd2a4ea3d69e17f19429"
+                    :class :ph-ctrl
+                    :id :ph-ctrl-album-art)
              "cell 1 1 2 3, align center"] ;; take up 2x3 = 6 grid boxes
             [(label :text "Song Name"
-                    :class :ph-loading
+                    :class :ph-ctrl
                     :id :ph-ctrl-song-name) "cell 1 4, align center"]
             [(label :text "Artist Name"
-                    :class :ph-ctrl-artist-name
-                    :id :ph-ctrl-song-name) "cell 1 5, align center"]
+                    :class :ph-ctrl
+                    :id :ph-ctrl-artist-name) "cell 1 5, align center"]
             ]))
 
 (defn get-power-hour-controller-wrapper-panel []
