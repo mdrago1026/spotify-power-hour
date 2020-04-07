@@ -75,7 +75,6 @@
 (defn
   ui
   []
-  ;; TODO: move this generator to a global app init call
 
   (let [mf (get-main-frame (ui-login/login-panel))
         ;; roots-to-update [slack-manage-main-panel slack-upload-main-panel slack-upload-login-panel]

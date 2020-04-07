@@ -100,6 +100,7 @@
   app-routes
   (GET "/spotify/callback" req (catch-spotify-exceptions handle-spotify-callback req))
   (GET "/spotify/callback/verify-ui" req (handle-verify-ui req))
+  (GET "/spotify-client/callback/verify-ui" req (handle-verify-ui req))
   (GET "/spotify/search" req (catch-spotify-exceptions handle-spotify-search req))
   (GET "/spotify/player/current" req (catch-spotify-exceptions handle-spotify-player-current req))
   (POST "/spotify/player/queue" req (catch-spotify-exceptions handle-spotify-player-queue req))
@@ -131,4 +132,4 @@
   (info "Starting Spotify Client!")
   (run-server app {:port (Integer. port) :ip ip}))
 
-;(-main "localhost" 8080)
+;;(-main "localhost" 8080)
