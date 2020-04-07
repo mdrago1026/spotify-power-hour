@@ -6,7 +6,7 @@
 (def ui-scene-login :login-form-scene)
 (def ui-scene-power-hour-main :power-hour-main)
 (def ui-scene-power-hour-loading :power-hour-loading)
-(def ui-scene-power-hour-start :power-hour-start)
+(def ui-scene-power-hour-ctrl :power-hour-ctrl)
 
 (def ui-ph-song-count-defaults (vec (reverse (drop 1 (take-nth 5 (range 0 (inc cfg-gen/max-power-hour-length-min)))))))
 

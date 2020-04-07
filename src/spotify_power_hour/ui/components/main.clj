@@ -15,7 +15,7 @@
             [spotify-power-hour.ui.components.menubar :as ui-menu]
             [spotify-power-hour.ui.components.power-hour.main :as ui-ph]
             [spotify-power-hour.ui.components.power-hour.loading :as ui-ph-load]
-            [spotify-power-hour.ui.components.power-hour.start :as ui-ph-start]
+            [spotify-power-hour.ui.components.power-hour.controller :as ui-ph-ctrl]
             [spotify-power-hour.ui.controller :as ui-ctrl]))
 
 (defn get-main-frame [content]
@@ -39,7 +39,7 @@
         (not= (get-in old [:spotify :song-data-loaded]) (get-in old [:spotify :loading-percent]))
         (invoke-later
           (let [new-formatted-val (* 100 (/ (double (get-in old [:spotify :song-data-loaded]))
-                                            (double (get-in new-state [:spotify :selected-playlist-song-count]))))]
+                                            (double (get-in new-state [:spotify :song-data-to-load]))))]
             (config! (select (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading) [:#ph-loading-progress-bar])
                      :value new-formatted-val)))
 
@@ -108,12 +108,13 @@
             (let [callback (condp = (:scene new-state)
                              cmn-ui/ui-scene-power-hour-main ui-ctrl/init-ph-main-scene
                              cmn-ui/ui-scene-power-hour-loading ui-ctrl/init-ph-load
+                             cmn-ui/ui-scene-power-hour-ctrl ui-ctrl/init-ph-ctrl
                              nil)
                   new-scene (condp = (:scene new-state)
                               cmn-ui/ui-scene-power-hour-main (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-main)
                               cmn-ui/ui-scene-login (cmn-ui/get-panel cmn-ui/ui-scene-login)
                               cmn-ui/ui-scene-power-hour-loading (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading)
-                              cmn-ui/ui-scene-power-hour-start (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-start)
+                              cmn-ui/ui-scene-power-hour-ctrl (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-ctrl)
                               (do
                                 (info "Unknown scene: " (:scene new-state))
                                 nil))]
@@ -138,16 +139,16 @@
   (let [login-panel (get-login-panel)
         ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
         ph-loading-panel (ui-ph-load/get-power-hour-loading-wrapper-panel)
-        ph-start-panel (ui-ph-start/get-power-hour-start-wrapper-panel)
+        ph-ctrl-panel (ui-ph-ctrl/get-power-hour-controller-wrapper-panel)
         mf (get-main-frame login-panel)
-        roots-to-update [login-panel ph-main-panel ph-loading-panel ph-start-panel]]
+        roots-to-update [login-panel ph-main-panel ph-loading-panel ph-ctrl-panel]]
     (swap! cmn-ui/app-state assoc
            :ui-ref mf
            :roots-to-update roots-to-update
            :panels {cmn-ui/ui-scene-login login-panel
                     cmn-ui/ui-scene-power-hour-main ph-main-panel
                     cmn-ui/ui-scene-power-hour-loading ph-loading-panel
-                    cmn-ui/ui-scene-power-hour-start ph-start-panel}
+                    cmn-ui/ui-scene-power-hour-ctrl ph-ctrl-panel}
            :status nil
            :scene cmn-ui/ui-scene-login
            :authenticated? false
@@ -155,7 +156,13 @@
            :spotify {:playlists []
                      :selected-playlist-songs nil
                      :selected-playlist-song-count 0
-                     :song-data-loaded 0}
+                     :song-data-loaded 0
+                     :song-data-to-load 0
+                     :ph {:current-song-count 0
+                          :total-song-count 0
+                          :current-album-art-url nil
+                          :current-artist nil
+                          :current-album nil}}
            :token nil)
     (add-watchers mf)
     (scene-watcher mf)
@@ -168,7 +175,8 @@
     ))
 
 
-;
+
+
 ;(def my-ui (ui))
 ;
 ;(invoke-later

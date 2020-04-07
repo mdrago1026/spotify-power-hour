@@ -118,21 +118,31 @@
 
 (defn vec-of-track-objs->relative-ph-data [data]
   (vec (map (fn [{{duration-ms :duration_ms track-id :id
-                   track-name :name :as track} :track}]
-              {:track-id track-id
-               :duration-ms duration-ms
-               :track-name track-name
-               :artist-name (-> track :artists first :name)
-               ;:start-section (track-info->get-start-time {:duration-ms duration-ms
-               ;                                            :track-id track-id})
-               }) data)))
+                   track-name :name
+                   {images :images} :album :as track} :track}]
+              (let [{:keys [height width url] :as image} (nth images 1)] ;; 0 = 640, 1 = 300, 2 = 64
+                {:track-id track-id
+                 :duration-ms duration-ms
+                 :track-name track-name
+                 :artist-name (-> track :artists first :name)
+                 :image-url url
+                 ;:start-section (track-info->get-start-time {:duration-ms duration-ms
+                 ;                                            :track-id track-id})
+                 })) data)))
 
-(defn add-start-time-to-relative-ph-data [data]
-  (vec (map (fn [{:keys [track-id duration-ms] :as c}]
-              (swap! cmn-ui/app-state update-in [:spotify :song-data-loaded] inc)
-               (assoc c :start-section
-                        (track-info->get-start-time {:duration-ms duration-ms
-                                                     :track-id track-id}))) data)))
+(defn add-start-time-to-relative-ph-data [data number-of-elements]
+  (info "HI! "number-of-elements)
+  (let [data-to-update (vec (take number-of-elements data))
+        data-not-updated (vec (drop number-of-elements data))
+        _ (swap! cmn-ui/app-state assoc-in [:spotify :song-data-to-load] (count data-to-update))
+        updated-data (vec (map (fn [{:keys [track-id duration-ms] :as c}]
+                                 (swap! cmn-ui/app-state update-in [:spotify :song-data-loaded] inc)
+                                 (assoc c :start-section
+                                          (track-info->get-start-time {:duration-ms duration-ms
+                                                                       :track-id track-id}))) data-to-update))
+        final-data (conj updated-data data-not-updated)]
+    (info "BYE!")
+    final-data))
 
 (defn spotify-playlist-id->songs
   [playlist-id]
@@ -151,7 +161,7 @@
   (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? true))
 
 (defn ph-select-playlist [e {:keys [id name] :as selection}]
-  (invoke-later
+  (future
     (config! (select (to-root e) [:#ph-main-select-playlist]) :enabled? false)
     (config! (select (to-root e) [:#ph-main-select-spinner]) :visible? true)
     (config! (select (to-root e) [:#ph-main-start-ph-btn]) :enabled? false)
@@ -217,16 +227,20 @@
     (info "Init PH Start callback")
     (swap! cmn-ui/app-state assoc-in [:spotify :song-data-loaded] 0)
     (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
-          add-start-times (add-start-time-to-relative-ph-data current-song-data)]
+          add-start-times (add-start-time-to-relative-ph-data current-song-data 2)]
       (info "Done getting song data")
       (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs] add-start-times)
       (swap! cmn-ui/app-state assoc
              :status (get-in cmn-ui/ui-states [:ph :ready-to-start])
-             :scene ui-cmn/ui-scene-power-hour-start))))
+             :scene ui-cmn/ui-scene-power-hour-ctrl))))
 
-(defn init-ph-start [mf]
-  (info "Init PH START!")
+(defn init-ph-ctrl [mf]
+  (info "Init PH CTRL!")
+  (future
+
+    )
   )
 
+;;(add-start-time-to-relative-ph-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs]) 10)
 
 

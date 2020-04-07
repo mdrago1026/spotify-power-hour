@@ -149,6 +149,11 @@
                                                       "Content-type" "application/json; charset=utf-8"}})
         parsed-body (json/parse-string body true)]
     parsed-body))
+;
+;(-> (plalyist-id->track-list "75M2u29GVTzqp5q6p51IRC")
+;    :items
+;    first
+;    :track)
 
 (defn track-id->analysis [track-id]
   (let [url (format (:tracks-analysis urls) track-id)
