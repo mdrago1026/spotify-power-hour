@@ -16,7 +16,9 @@
             [spotify-power-hour.ui.components.power-hour.main :as ui-ph]
             [spotify-power-hour.ui.components.power-hour.loading :as ui-ph-load]
             [spotify-power-hour.ui.components.power-hour.controller :as ui-ph-ctrl]
-            [spotify-power-hour.ui.controller :as ui-ctrl]))
+            [spotify-power-hour.ui.controller :as ui-ctrl])
+  (:import (javax.swing UIManager)
+           (com.bulenkov.darcula DarculaLaf)))
 
 (defn get-main-frame [content]
   (let [mf (frame :title cfg-ui/app-name
@@ -136,7 +138,9 @@
 (defn
   ui
   []
-  (let [login-panel (get-login-panel)
+  (let [darcula-laf (DarculaLaf.)
+        _ (UIManager/setLookAndFeel darcula-laf)
+        login-panel (get-login-panel)
         ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
         ph-loading-panel (ui-ph-load/get-power-hour-loading-wrapper-panel)
         ph-ctrl-panel (ui-ph-ctrl/get-power-hour-controller-wrapper-panel)
@@ -174,7 +178,7 @@
 
     ))
 
-
+;;(native!)
 
 
 ;(def my-ui (ui))
