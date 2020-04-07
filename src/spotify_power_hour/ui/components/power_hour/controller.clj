@@ -17,28 +17,39 @@
 (defn get-power-hour-controller-panel []
   (mig/mig-panel
     :id :ph-controller-panel
-    :constraints ["fill, flowy, debug"]
-    :items [[(button :text "Prev"
+    :constraints ["fill, flowy"]
+    :items [[(label :text "58"
+                    :class :ph-ctrl
+                    :font (font :name "Lucida Grande" :size 60)
+                    :id :ph-ctrl-timer)
+             "cell 1 0 2 1, align center"]
+            [(button :text "Prev"
                      :class :ph-ctrl
                     ;; :listen [:action ui-ctrl/handle-client-id-submit]
                      :id :ph-ctrl-prev-btn)
-             "cell 0 2"]
+             "cell 0 3"]
             [(button :text "Next"
                      :class :ph-ctrl
                      ;; :listen [:action ui-ctrl/handle-client-id-submit]
                      :id :ph-ctrl-next-btn)
-             "cell 3 2"]
+             "cell 3 3"]
 
             [(label :icon "https://i.scdn.co/image/ab67616d00001e021522bd2a4ea3d69e17f19429"
                     :class :ph-ctrl
                     :id :ph-ctrl-album-art)
-             "cell 1 1 2 3, align center"] ;; take up 2x3 = 6 grid boxes
+             "cell 1 2 2 3, align center"] ;; take up 2x3 = 6 grid boxes
             [(label :text "Song Name"
                     :class :ph-ctrl
-                    :id :ph-ctrl-song-name) "cell 1 4, align center"]
+                    :id :ph-ctrl-song-name)
+             "cell 1 5, align center"]
             [(label :text "Artist Name"
                     :class :ph-ctrl
-                    :id :ph-ctrl-artist-name) "cell 1 5, align center"]
+                    :id :ph-ctrl-artist-name)
+             "cell 1 6, align center"]
+            [(label :text "Current Progress: 26/60"
+                    :class :ph-ctrl
+                    :id :ph-ctrl-progress)
+             "cell 1 7, align center"]
             ]))
 
 (defn get-power-hour-controller-wrapper-panel []
