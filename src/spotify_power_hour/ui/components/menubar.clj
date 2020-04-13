@@ -10,11 +10,17 @@
 
 (def account-logout-menu-item
   (menu-item :text "Logout"
-             :listen [:action ui-ctrl/menu-account-logout-handler ]))
+             :listen [:action ui-ctrl/menu-account-logout-handler]))
+
+(def debug-playlist-selection-menu-item
+  (menu-item :text "Playlist Selection"
+             :listen [:action ui-ctrl/menu-debug-playlist-selection-handler]))
+
 
 (def menu-bar
   (menubar :items
            [
             (menu :text "Account" :items [account-logout-menu-item])
+            (menu :text "Debug" :items [debug-playlist-selection-menu-item])
             ]))
 

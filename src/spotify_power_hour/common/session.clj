@@ -1,7 +1,7 @@
 (ns spotify-power-hour.common.session
   (:import (java.util UUID)))
 
-(def spotify-session (atom {}))
+(def spotify-session (atom nil))
 
 (def power-hour-state (atom {}))
 

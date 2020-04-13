@@ -16,11 +16,17 @@
             [clojure.java.browse :as browse]
             [spotify-power-hour.controller.spotify :as ctrl-spotify]))
 
+;;; DEBUG
+
+(defn menu-debug-playlist-selection-handler [e]
+  (swap! ui-cmn/app-state assoc
+         :scene cmn-ui/ui-scene-power-hour-main))
+
 ;;; LOGOUT
 
 (defn menu-account-logout-handler [e]
   (info "Logging out!")
-  (reset! cmn-session/spotify-session {})
+  (reset! cmn-session/spotify-session nil)
   (cmn-comp/update-shared-user-info-component cmn-comp/user-info-not-logged-in)
   (swap! ui-cmn/app-state assoc
          :authenticated? false
@@ -40,6 +46,17 @@
       {:valid? false
        :response (ex-data e)})))
 
+(defn handle-successful-login [token]
+    (info "Successfully authenticated!")
+    (reset! cmn-session/spotify-session token)
+    (let [{:keys [id] :as user-info} (api-spotify/my-profile)
+          new-text (format "Logged in as: %s" id)]
+      (cmn-comp/update-shared-user-info-component new-text)
+      (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
+             :authenticated? true
+             :user-info user-info
+             :scene cmn-ui/ui-scene-power-hour-main)))
+
 (defn handle-client-id-submit [e]
   (future
     (let [client-id (text (select (to-root e) [:#login-client-id]))
@@ -50,21 +67,11 @@
       (browse/browse-url oauth-url)
       (let [{:keys [valid? response]} (verify-login redir-uri)]
         (if valid?
-          (do
-            (info "Successfully authenticated!")
-            (reset! cmn-session/spotify-session (:token response))
-            (let [{:keys [id] :as user-info} (api-spotify/my-profile)
-                  new-text (format "Logged in as: %s" id)]
-              (cmn-comp/update-shared-user-info-component new-text)
-              (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-                     :authenticated? true
-                     :user-info user-info
-                     :scene cmn-ui/ui-scene-power-hour-main)))
+          (handle-successful-login (:token response))
           (do
             (info "Failed to retrieve user details with error: " response)
             (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :failed-to-auth])
                    :authenticated? false)))))))
-
 
 ;; CALLBACKS
 

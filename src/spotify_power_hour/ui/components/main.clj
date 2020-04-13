@@ -16,13 +16,15 @@
             [spotify-power-hour.ui.components.power-hour.main :as ui-ph]
             [spotify-power-hour.ui.components.power-hour.loading :as ui-ph-load]
             [spotify-power-hour.ui.components.power-hour.controller :as ui-ph-ctrl]
-            [spotify-power-hour.ui.controller :as ui-ctrl])
+            [spotify-power-hour.ui.controller :as ui-ctrl]
+            [spotify-power-hour.common.session :as cmn-session]
+            [spotify-power-hour.config.logging :as cfg-log])
   (:import (javax.swing UIManager)
            (com.bulenkov.darcula DarculaLaf)))
 
 (defn get-main-frame [content]
   (let [mf (frame :title cfg-ui/app-name
-                  :on-close (or (keyword (System/getenv "SEU_ON_CLOSE")) :exit)
+                  :on-close :dispose
                   :content content
                   :menubar ui-menu/menu-bar
                   :width cfg-ui/ui-width
@@ -33,18 +35,11 @@
     (listen (select mf [:#login-client-id]) :key-pressed ui-login/handle-keys)
     mf))
 
-(defn add-watchers [ui]
+(defn state-watcher [ui]
   (add-watch
     cmn-ui/app-state :cmn-ui/app-state
     (fn [_ _ old new-state]
       (cond
-        (not= (get-in old [:spotify :song-data-loaded]) (get-in old [:spotify :loading-percent]))
-        (invoke-later
-          (let [new-formatted-val (* 100 (/ (double (get-in old [:spotify :song-data-loaded]))
-                                            (double (get-in new-state [:spotify :song-data-to-load]))))]
-            (config! (select (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading) [:#ph-loading-progress-bar])
-                     :value new-formatted-val)))
-
         (= cmn-ui/ui-scene-login (:scene new-state))
         (cond (= (get-in cmn-ui/ui-states [:login :sending-request-to-auth-server]) (new-state :status))
               (invoke-later
@@ -82,20 +77,9 @@
                 (config! (select ui [:#login-success-text]) :visible? false)
 
                 (config! (select ui [:.top-info-logged-in-text])
-                         :text cmn-ui-comp/user-info-not-logged-in)))
-
-
-        :else
-        ;;  (error (format "Unknown UI state: %s" (new-state :status)))
-        (invoke-later
-          (info "UI STATE: NIL")
-          (config! (select ui [:#login-button]) :enabled? true)
-          (config! (select ui [:#login-spinner]) :visible? false)
-          (config! (select ui [:.login-form]) :enabled? true)
-          (config! (select ui [:#login-success-text]) :visible? false)
-          ))
-      ;;)
-      )))
+                         :text cmn-ui-comp/user-info-not-logged-in))
+              :else
+              (ui-ctrl/menu-account-logout-handler nil))))))
 
 (defn scene-watcher [ui]
   (add-watch
@@ -139,37 +123,41 @@
   ui
   []
   (let [darcula-laf (DarculaLaf.)
+        _ (cfg-log/load-logging-config!)
         _ (UIManager/setLookAndFeel darcula-laf)
         login-panel (get-login-panel)
         ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
         ph-loading-panel (ui-ph-load/get-power-hour-loading-wrapper-panel)
         ph-ctrl-panel (ui-ph-ctrl/get-power-hour-controller-wrapper-panel)
         mf (get-main-frame login-panel)
-        roots-to-update [login-panel ph-main-panel ph-loading-panel ph-ctrl-panel]]
-    (swap! cmn-ui/app-state assoc
-           :ui-ref mf
-           :roots-to-update roots-to-update
-           :panels {cmn-ui/ui-scene-login login-panel
-                    cmn-ui/ui-scene-power-hour-main ph-main-panel
-                    cmn-ui/ui-scene-power-hour-loading ph-loading-panel
-                    cmn-ui/ui-scene-power-hour-ctrl ph-ctrl-panel}
-           :status nil
-           :scene cmn-ui/ui-scene-login
-           :authenticated? false
-           :user-info nil
-           :spotify {:playlists []
-                     :selected-playlist-songs nil
-                     :selected-playlist-song-count 0
-                     :song-data-loaded 0
-                     :song-data-to-load 0
-                     :ph {:current-song-count 0
-                          :total-song-count 0
-                          :current-album-art-url nil
-                          :current-artist nil
-                          :current-album nil}}
-           :token nil)
-    (add-watchers mf)
+        roots-to-update [login-panel ph-main-panel ph-loading-panel ph-ctrl-panel]
+        potential-token @cmn-session/spotify-session]
+    (reset! cmn-ui/app-state
+            {:ui-ref mf
+             :roots-to-update roots-to-update
+             :panels {cmn-ui/ui-scene-login login-panel
+                      cmn-ui/ui-scene-power-hour-main ph-main-panel
+                      cmn-ui/ui-scene-power-hour-loading ph-loading-panel
+                      cmn-ui/ui-scene-power-hour-ctrl ph-ctrl-panel}
+             :status nil
+             :scene cmn-ui/ui-scene-login
+             :authenticated? false
+             :user-info nil
+             :spotify {:playlists []
+                       :selected-playlist-songs nil
+                       :selected-playlist-song-count 0
+                       :song-data-loaded 0
+                       :song-data-to-load 0
+                       :ph {:current-song-count 0
+                            :total-song-count 0
+                            :current-album-art-url nil
+                            :current-artist nil
+                            :current-album nil}}
+             :token nil})
+    (state-watcher mf)
     (scene-watcher mf)
+    (when potential-token
+      (ui-ctrl/handle-successful-login potential-token))
     ;(invoke-later
     ;  (show! mf)
     ;  mf)
@@ -178,10 +166,17 @@
 
     ))
 
-;;(native!)
-
-
 ;(def my-ui (ui))
 ;
 ;(invoke-later
 ;  (show! my-ui))
+
+
+(def ui-ref-atom (atom nil))
+
+(defn refresh-ui []
+  (let [ui-ref (ui)]
+    (reset! ui-ref-atom ui-ref)
+    (show! ui-ref)))
+
+;;(refresh-ui)

@@ -8,4 +8,4 @@
       10
       (again/randomize-strategy
         0.5
-        (again/multiplicative-strategy 500 1.5)))))
+        (again/multiplicative-strategy 1000 1.5)))))
