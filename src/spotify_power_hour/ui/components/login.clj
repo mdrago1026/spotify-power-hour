@@ -15,7 +15,8 @@
             [spotify-power-hour.controller.spotify :as ctrl-spotify]
             [spotify-power-hour.common.session :as cmn-session]
             [spotify-power-hour.ui.components.common :as cmn-comp]
-            [spotify-power-hour.ui.controller :as ui-ctrl])
+            [spotify-power-hour.ui.controller :as ui-ctrl]
+            [spotify-power-hour.ui.components.common :as cmn-ui-comp])
   (:import (java.awt.event KeyEvent)
            (javax.swing ImageIcon)))
 
@@ -34,7 +35,7 @@
     nil
     ))
 
-(def login-form
+(defn get-login-panel []
   (mig/mig-panel
     :constraints ["fill"]
     :items [[(label "Client ID") "cell 0 0, grow"]
@@ -67,10 +68,11 @@
                     :id :login-success-text) "cell 0 5, align center"]
             ]))
 
-(defn login-panel []
+(defn get-login-panel-wrapper []
   (mig/mig-panel
     :id :login-panel
     :constraints ["fill, flowy"]
     :items [
-            [login-form "cell 0 0, align center"]
+            [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
+            [(get-login-panel) "cell 0 0, align center"]
             ]))

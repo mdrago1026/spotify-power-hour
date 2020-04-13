@@ -110,22 +110,13 @@
                          :title (str cfg-ui/app-name " : " (name (:scene new-state))))
                 (when callback (callback ui))))))))))
 
-(defn get-login-panel []
-  (mig/mig-panel
-    :id :main-panel
-    :constraints ["fill, flowy"]
-    :items [
-            [(cmn-ui-comp/user-info-panel) "cell 0 0, aligny top, growx"]
-            [(ui-login/login-panel) "cell 0 0, align center"]
-            ]))
-
 (defn
   ui
   []
   (let [darcula-laf (DarculaLaf.)
         _ (cfg-log/load-logging-config!)
         _ (UIManager/setLookAndFeel darcula-laf)
-        login-panel (get-login-panel)
+        login-panel (ui-login/get-login-panel-wrapper)
         ph-main-panel (ui-ph/get-power-hour-wrapper-panel)
         ph-loading-panel (ui-ph-load/get-power-hour-loading-wrapper-panel)
         ph-ctrl-panel (ui-ph-ctrl/get-power-hour-controller-wrapper-panel)
