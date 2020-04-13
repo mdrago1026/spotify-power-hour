@@ -10,6 +10,8 @@
 (def session-id-cache (atom {}))
 
 ;; Used for UI to call OAUTH server
-(def local-session-id (UUID/randomUUID))
+(def local-session-id (atom (UUID/randomUUID)))
 
 ;;@session-id-cache
+
+;;@spotify-session

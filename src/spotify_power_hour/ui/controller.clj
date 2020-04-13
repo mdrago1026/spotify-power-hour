@@ -14,7 +14,8 @@
             [seesaw.font :refer :all]
             [spotify-power-hour.spotify.api :as api-spotify]
             [clojure.java.browse :as browse]
-            [spotify-power-hour.controller.spotify :as ctrl-spotify]))
+            [spotify-power-hour.controller.spotify :as ctrl-spotify])
+  (:import (java.util UUID)))
 
 ;;; DEBUG
 
@@ -26,6 +27,7 @@
 
 (defn menu-account-logout-handler [e]
   (info "Logging out!")
+  (reset! cmn-session/local-session-id (UUID/randomUUID))
   (reset! cmn-session/spotify-session nil)
   (cmn-comp/update-shared-user-info-component cmn-comp/user-info-not-logged-in)
   (swap! ui-cmn/app-state assoc
@@ -41,7 +43,7 @@
 (defn verify-login [redir-url]
   (try
     {:valid? true
-     :response (ctrl-spotify/attempt-to-validate-oauth redir-url cmn-session/local-session-id)}
+     :response (ctrl-spotify/attempt-to-validate-oauth redir-url @cmn-session/local-session-id)}
     (catch Exception e
       {:valid? false
        :response (ex-data e)})))
@@ -61,7 +63,7 @@
   (future
     (let [client-id (text (select (to-root e) [:#login-client-id]))
           redir-uri (text (select (to-root e) [:#login-redirect-uri]))
-          oauth-url (api-spotify/client-id->oauth-url client-id redir-uri cmn-session/local-session-id)]
+          oauth-url (api-spotify/client-id->oauth-url client-id redir-uri @cmn-session/local-session-id)]
       (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :sending-request-to-auth-server]))
       (info "OAUTH URL: " oauth-url)
       (browse/browse-url oauth-url)
