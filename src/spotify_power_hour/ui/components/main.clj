@@ -81,6 +81,17 @@
               :else
               (ui-ctrl/menu-account-logout-handler nil))))))
 
+(defn percent-watcher [ui]
+  (add-watch
+    cmn-ui/app-state :percent-watcher
+    (fn [_ _ old new-state]
+      (not= (get-in old [:spotify :song-data-loaded]) (get-in old [:spotify :loading-percent]))
+      (invoke-later
+        (let [new-formatted-val (* 100 (/ (double (get-in old [:spotify :song-data-loaded]))
+                                          (double (get-in new-state [:spotify :song-data-to-load]))))]
+          (config! (select (cmn-ui/get-panel cmn-ui/ui-scene-power-hour-loading) [:#ph-loading-progress-bar])
+                   :value new-formatted-val))))))
+
 (defn scene-watcher [ui]
   (add-watch
     cmn-ui/app-state :scene-watcher
@@ -147,6 +158,7 @@
              :token nil})
     (state-watcher mf)
     (scene-watcher mf)
+    (percent-watcher mf)
     (when potential-token
       (ui-ctrl/handle-successful-login potential-token))
     ;(invoke-later

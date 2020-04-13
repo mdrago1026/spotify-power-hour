@@ -16,7 +16,6 @@
   (menu-item :text "Playlist Selection"
              :listen [:action ui-ctrl/menu-debug-playlist-selection-handler]))
 
-
 (def menu-bar
   (menubar :items
            [

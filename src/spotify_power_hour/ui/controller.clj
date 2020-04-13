@@ -236,7 +236,7 @@
     (info "Init PH Start callback")
     (swap! cmn-ui/app-state assoc-in [:spotify :song-data-loaded] 0)
     (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
-          add-start-times (add-start-time-to-relative-ph-data current-song-data 2)]
+          add-start-times (add-start-time-to-relative-ph-data current-song-data 5)]
       (info "Done getting song data")
       (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs] add-start-times)
       (swap! cmn-ui/app-state assoc
@@ -252,4 +252,9 @@
 
 ;;(add-start-time-to-relative-ph-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs]) 10)
 
+
+;; TODO
+;; now that login flow for testing is fixed
+;; add a background job the fires off after the initial load that goes and gets the rest of the start times
+;; start the actual power hour ctrl impl
 
