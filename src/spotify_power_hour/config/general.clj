@@ -8,3 +8,6 @@
 
 ;; The number of songs that should have their data pre-loaded when starting a power hour
 (def song-count-to-preload 5)
+
+;; We will filter out songs less than this to ensure each song is at least a minute
+(def min-song-length-ms 60000)

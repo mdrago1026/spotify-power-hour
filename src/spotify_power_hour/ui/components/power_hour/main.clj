@@ -38,28 +38,31 @@
                       :id :ph-main-select-playlist)]
     (mig/mig-panel
       :id :ph-main-panel
-      :constraints ["fill, flowy"]
+      :constraints ["flowy"]
       :items [
               [(label :text "Select a Playlist"
                       :class :ph-main
-                      :id :ph-main-select-label) "cell 0 0 ,align center"]
+                      :id :ph-main-select-label) "cell 0 0, align center"]
               [playlist-cb "cell 0 0, align center"]
               [(label :text cmn-ui-comp/ph-default-playlist-count-text
                       :class :ph-main
-                      :id :ph-main-selected-playlist-song-count-label) "cell 0 1 ,align center"]
+                      :id :ph-main-selected-playlist-song-count-label) "cell 0 1, align center"]
+              [(label :text cmn-ui-comp/ph-default-playlist-over-60-count-text
+                      :class :ph-main
+                      :id :ph-main-selected-playlist-over-60-song-count-label) "cell 0 2, align center, gapbottom 10"]
               [(label :text "Power Hour Song Count"
                       :class :ph-main
-                      :id :ph-main-select-label) "cell 0 2, align center"]
-              [song-count-cb "cell 0 2, align center"]
+                      :id :ph-main-select-label) "cell 0 3, align center"]
+              [song-count-cb "cell 0 4, align center"]
               [(label :icon (ImageIcon. (io/resource "ajax-loader.gif"))
                       :class :ph-main
                       :id :ph-main-select-spinner :visible? false)
-               "cell 0 3, align center"]
+               "cell 0 5, align center"]
               [(label :text "Selected playlists does not have minimum number of songs"
                       :class :ph-main
                       :foreground (color "#ff0000")
                       :visible? false
-                      :id :ph-main-not-enough-songs-error) "cell 0 4, align center"]
+                      :id :ph-main-not-enough-songs-error) "cell 0 6, align center"]
               [(button :text "Start Power Hour!"
                        :visible? false
                        :class :ph-main
@@ -67,7 +70,7 @@
                                           (info "CLICKED START PH!!!")
                                           (ui-ctrl/handle-start-ph e))]
                        :id :ph-main-start-ph-btn)
-               "cell 0 5, align center"]
+               "cell 0 7, align center"]
               ])))
 
 (defn get-power-hour-wrapper-panel []

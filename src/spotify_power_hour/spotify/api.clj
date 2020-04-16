@@ -41,30 +41,29 @@
     parsed-body))
 
 ;; TODO:: this needs to be cleaned/loopified
-(defn wrap-oauth-refresh [http-fn & args]
- ;; (info "ARGS: "args)
+(defn wrap-oauth-refresh [http-fn url config-map]
+  (info (format "Calling spotify API (%s) with: "url) config-map)
   (try
-    (if args
-      (let [arg-map (nth args 1)
-            final-arg-map arg-map                           ;;(assoc arg-map :throw-exceptions false)
-            final-args [(first args) final-arg-map]]
-        (apply http-fn final-args))
-      (http-fn))
+    (let [response (http-fn url config-map)]
+      (info "Spotify API Response: "response)
+      response)
     (catch Exception e
       (if-let [exception-data (ex-data e)]
         (if (= 401 (:status exception-data))
           (do
             (warn "TOKEN EXPIRED!")
-            (let [refresh-token-results (get-refresh-token)]
-              (swap! cmn-session/spotify-session assoc :access_token (:access_token refresh-token-results))
-              (info refresh-token-results)
-              (info "Calling again...")
-              (wrap-oauth-refresh http-fn args)))
+            (let [refresh-token-results (get-refresh-token)
+                  _ (swap! cmn-session/spotify-session assoc :access_token (:access_token refresh-token-results))
+                  updated-headers (assoc-in config-map [:headers "Authorization"]
+                                            (str "Bearer " (:access_token @cmn-session/spotify-session)))
+                  _ (info "Calling again...")
+                  updated-response (http-fn url updated-headers)]
+              (info "Updated Spotify API Response: "updated-response)
+              updated-response))
           (do
             (warn "Caught generic exception, rethrowing...")
             (let [parsed-body (json/parse-string (:body exception-data) true)
                   {:keys [status message] :as error-context} (:error parsed-body)]
-
               (info "ERROR BODY: " error-context)
               (throw (ex-info "Spotify Exception" error-context)))))
         (throw e)))))

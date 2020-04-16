@@ -177,8 +177,12 @@
     (config! (select (to-root e) [:#ph-main-select-song-count]) :enabled? false)
     (info "Playlist selected: " selection)
     (let [song-list (spotify-playlist-id->songs id)
+          songs-at-least-a-minute (filterv (fn [{:keys [duration-ms]}]
+                                             (<= cfg-gen/min-song-length-ms duration-ms)) song-list)
+          songs-at-least-a-minute-count (count songs-at-least-a-minute)
           song-count (count song-list)
           final-text (str cmn-comp/ph-default-playlist-count-text song-count)
+          final-text-over-60 (str cmn-comp/ph-default-playlist-over-60-count-text songs-at-least-a-minute-count)
           min-song-count (last cmn-ui/ui-ph-song-count-defaults)
           max-song-count (first cmn-ui/ui-ph-song-count-defaults)
           option-set (set cmn-ui/ui-ph-song-count-defaults)
@@ -203,6 +207,7 @@
         (config! (select (to-root e) [:#ph-main-select-song-count]) :model cmn-ui/ui-ph-song-count-defaults))
 
       (config! (select (to-root e) [:#ph-main-selected-playlist-song-count-label]) :text final-text)
+      (config! (select (to-root e) [:#ph-main-selected-playlist-over-60-song-count-label]) :text final-text-over-60)
       (info "Song count: " song-count)
 
       (if below-min?
