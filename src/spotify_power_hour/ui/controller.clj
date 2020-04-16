@@ -130,7 +130,7 @@
   (vec (map (fn [{{duration-ms :duration_ms track-id :id
                    track-name :name
                    {images :images} :album :as track} :track}]
-              (let [{:keys [height width url] :as image} (nth images 1)] ;; 0 = 640, 1 = 300, 2 = 64
+              (let [{:keys [height width url] :as image} (nth images 1 nil)] ;; 0 = 640, 1 = 300, 2 = 64
                 {:track-id track-id
                  :duration-ms duration-ms
                  :track-name track-name
@@ -162,6 +162,7 @@
     formatted-song-list))
 
 ;;(spotify-playlist-id->songs "75M2u29GVTzqp5q6p51IRC")
+;;(spotify-playlist-id->songs "378rfNHckTTvsQazLOwsbv")
 
 (defn util-stop-loading-song-count [e]
   (config! (select (to-root e) [:#ph-main-select-playlist]) :enabled? true)
