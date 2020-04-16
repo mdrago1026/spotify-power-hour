@@ -231,22 +231,21 @@
          :status (get-in cmn-ui/ui-states [:ph :retrieving-song-starts])
          :scene cmn-ui/ui-scene-power-hour-loading))
 
-
 (defn song-data-analysis-worker [preload-count]
   (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
         current-song-data-count (count current-song-data)
         remaining-count (- current-song-data-count preload-count)
         song-range (range preload-count current-song-data-count)]
-    (info song-range)
     (info (format "[WORKER] Starting background song-data gatherer. Total songs in selected playlist: (%s). Pre-fetch count: (%s). Songs remaining: (%s)"
                   current-song-data-count preload-count remaining-count))
     (doseq [i song-range
             :let [{:keys [track-id duration-ms] :as c} (nth current-song-data i)]]
-      (info (format "[WORKER] (%s/%s) Starting to process song: %s" i current-song-data-count c))
+      (info (format "[WORKER] (%s/%s) Starting to process song: %s" i (dec current-song-data-count) c))
       (let [song-analysis (track-info->get-start-time {:duration-ms duration-ms
                                                        :track-id track-id})
             final-data (assoc c :start-section song-analysis)]
-        (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs i] final-data)))))
+        (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs i] final-data)))
+    (info "[WORKER] Background job complete!")))
 
 (defn init-ph-load [mf]
   (future
@@ -272,10 +271,11 @@
 ;;(add-start-time-to-relative-ph-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs]) 10)
 
 
-;; TODO
-;; now that login flow for testing is fixed
-;; add a background job the fires off after the initial load that goes and gets the rest of the start times
-;; start the actual power hour ctrl impl
-
-
-;;(get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
+;; Order of operations:
+;; 1. load song data for all songs in playlist
+;; 2. filter out songs < 60 second
+;; 3. users chooses how many songs
+;; 4. at random, update the playlist state to have that many songs
+;; 5. start power hour
+;; 6. load the first 5
+;; 7. start bg worker
