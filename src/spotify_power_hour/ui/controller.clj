@@ -14,7 +14,8 @@
             [seesaw.font :refer :all]
             [spotify-power-hour.spotify.api :as api-spotify]
             [clojure.java.browse :as browse]
-            [spotify-power-hour.controller.spotify :as ctrl-spotify])
+            [spotify-power-hour.controller.spotify :as ctrl-spotify]
+            [spotify-power-hour.config.general :as cfg-gen])
   (:import (java.util UUID)))
 
 ;;; DEBUG
@@ -49,15 +50,15 @@
        :response (ex-data e)})))
 
 (defn handle-successful-login [token]
-    (info "Successfully authenticated!")
-    (reset! cmn-session/spotify-session token)
-    (let [{:keys [id] :as user-info} (api-spotify/my-profile)
-          new-text (format "Logged in as: %s" id)]
-      (cmn-comp/update-shared-user-info-component new-text)
-      (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
-             :authenticated? true
-             :user-info user-info
-             :scene cmn-ui/ui-scene-power-hour-main)))
+  (info "Successfully authenticated!")
+  (reset! cmn-session/spotify-session token)
+  (let [{:keys [id] :as user-info} (api-spotify/my-profile)
+        new-text (format "Logged in as: %s" id)]
+    (cmn-comp/update-shared-user-info-component new-text)
+    (swap! cmn-ui/app-state assoc :status (get-in cmn-ui/ui-states [:login :successfully-authed])
+           :authenticated? true
+           :user-info user-info
+           :scene cmn-ui/ui-scene-power-hour-main)))
 
 (defn handle-client-id-submit [e]
   (future
@@ -140,7 +141,6 @@
                  })) data)))
 
 (defn add-start-time-to-relative-ph-data [data number-of-elements]
-  (info "HI! "number-of-elements)
   (let [data-to-update (vec (take number-of-elements data))
         data-not-updated (vec (drop number-of-elements data))
         _ (swap! cmn-ui/app-state assoc-in [:spotify :song-data-to-load] (count data-to-update))
@@ -149,7 +149,7 @@
                                  (assoc c :start-section
                                           (track-info->get-start-time {:duration-ms duration-ms
                                                                        :track-id track-id}))) data-to-update))
-        final-data (conj updated-data data-not-updated)]
+        final-data (vec (concat updated-data data-not-updated))]
     (info "BYE!")
     final-data))
 
@@ -231,13 +231,32 @@
          :status (get-in cmn-ui/ui-states [:ph :retrieving-song-starts])
          :scene cmn-ui/ui-scene-power-hour-loading))
 
+
+(defn song-data-analysis-worker [preload-count]
+  (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
+        current-song-data-count (count current-song-data)
+        remaining-count (- current-song-data-count preload-count)
+        song-range (range preload-count current-song-data-count)]
+    (info song-range)
+    (info (format "[WORKER] Starting background song-data gatherer. Total songs in selected playlist: (%s). Pre-fetch count: (%s). Songs remaining: (%s)"
+                  current-song-data-count preload-count remaining-count))
+    (doseq [i song-range
+            :let [{:keys [track-id duration-ms] :as c} (nth current-song-data i)]]
+      (info (format "[WORKER] (%s/%s) Starting to process song: %s" i current-song-data-count c))
+      (let [song-analysis (track-info->get-start-time {:duration-ms duration-ms
+                                                       :track-id track-id})
+            final-data (assoc c :start-section song-analysis)]
+        (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs i] final-data)))))
+
 (defn init-ph-load [mf]
   (future
     (info "Init PH Start callback")
     (swap! cmn-ui/app-state assoc-in [:spotify :song-data-loaded] 0)
     (let [current-song-data (get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
-          add-start-times (add-start-time-to-relative-ph-data current-song-data 5)]
+          add-start-times (add-start-time-to-relative-ph-data current-song-data
+                                                              cfg-gen/song-count-to-preload)]
       (info "Done getting song data")
+      (future (song-data-analysis-worker cfg-gen/song-count-to-preload))
       (swap! cmn-ui/app-state assoc-in [:spotify :selected-playlist-songs] add-start-times)
       (swap! cmn-ui/app-state assoc
              :status (get-in cmn-ui/ui-states [:ph :ready-to-start])
@@ -258,3 +277,5 @@
 ;; add a background job the fires off after the initial load that goes and gets the rest of the start times
 ;; start the actual power hour ctrl impl
 
+
+;;(get-in @cmn-ui/app-state [:spotify :selected-playlist-songs])
